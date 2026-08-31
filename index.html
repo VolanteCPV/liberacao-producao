@@ -102,33 +102,25 @@ async function fecharLeitor(){
   scanner.style.display='none';
 }
 async function qrLido(texto){
-  await pararLeitor();
+  // O QR da etiqueta já é o próprio link pré-preenchido do Google Forms.
+  // Ao reconhecer um QR válido deste projeto, fecha a câmera e abre o formulário.
   try{
     const u=new URL(texto);
+    const hostOk=(u.hostname==='docs.google.com');
+    const formOk=u.pathname.includes('/forms/');
     const it=u.searchParams.get('entry.510346288')||'';
     const o=u.searchParams.get('entry.982950365')||'';
     const m=u.searchParams.get('entry.1488788372')||'';
     const s=u.searchParams.get('entry.705084022')||'';
-    if(!it&&!o&&!m) throw new Error('Este QR não contém dados de Liberação de Produção.');
-    statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
-    const acao=confirm('QR LIDO\\n\\nOP: '+o+'\\nItem: '+it+'\\nMáquina: '+m+'\\nSetor: '+s+'\\n\\nOK = preencher dados\\nCANCELAR = consultar produção');
-    if(acao){
-      item.value=it; op.value=o;
-      let linhaAchada=Object.keys(MAQUINAS).find(l=>MAQUINAS[l].includes(m));
-      if(linhaAchada){linha.value=linhaAchada;atualizarMaquinas();maquina.value=m}
-      setor.value=s;
-      scanner.style.display='none';
-      item.scrollIntoView({behavior:'smooth'});
-    }else{
-      scanner.style.display='none';
-      consulta.style.display='block';
-      qop.value=o;qitem.value=it;qmaq.value=m;qdata.value='';
-      await consultarProducao();
-      consulta.scrollIntoView({behavior:'smooth'});
-    }
+    if(!hostOk||!formOk||!it||!o||!m) throw new Error('QR não pertence à Liberação de Produção.');
+    statusLeitor.textContent='✓ QR lido — abrindo formulário...';
+    if(navigator.vibrate) navigator.vibrate(120);
+    await pararLeitor();
+    scanner.style.display='none';
+    window.location.href=u.href;
   }catch(e){
     statusLeitor.textContent='QR não reconhecido: '+e.message;
-    setTimeout(()=>abrirLeitor(),1200);
+    // Mantém a câmera ativa para tentar novamente, sem reinicializá-la.
   }
 }
 
