@@ -10,10 +10,10 @@
 <style>
 body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
 </style></head><body><div class="card">
-<h1>Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • versão final otimizada</div>
+<h1>Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms — teste final</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
-<div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><button class="gray" type="button" onclick="gerarQRTeste()">🧪 TESTAR QR — TESTE123</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
+<div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
 <div class="scanner" id="scanner">
   <h2>Leitor de QR Code</h2>
   <div class="sub">Aponte a câmera para uma etiqueta de Liberação de Produção.</div>
@@ -44,7 +44,7 @@ let conectado=false, etiquetaURL="";
 function atualizarMaquinas(){const l=linha.value,s=maquina;s.innerHTML="";if(!l){s.disabled=true;s.innerHTML='<option value="">Primeiro selecione a linha</option>';return}s.disabled=false;s.innerHTML='<option value="">Selecione a máquina</option>';MAQUINAS[l].forEach(m=>s.add(new Option(m,m)))}
 function setStatus(t){document.getElementById('status').textContent=t}
 async function conectarB1(){try{if(!window.Niimbot||!Niimbot.isSupported())throw new Error('Web Bluetooth não disponível. Abra pelo Chrome em uma página HTTPS.');setStatus('Procurando B1...');const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('A impressora encontrada não foi identificada como B1 (id 4096).');conectado=true;setStatus('✓ B1 conectada — id '+p.modelId+' • protocolo '+(p.protocolVersion??'detectado'));}catch(e){conectado=false;setStatus('Erro: '+e.message)}}
-function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':it,'entry.982950365':o,'entry.1488788372':m,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
+function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
 function desenharEtiqueta(url,o,it,m){
  const c=preview,x=c.getContext('2d');
  x.imageSmoothingEnabled=false;
@@ -66,35 +66,6 @@ function desenharEtiqueta(url,o,it,m){
    etiquetaURL=c.toDataURL('image/png');holder.remove();
  };if(q.tagName==='IMG'&&!q.complete)q.onload=draw;else draw()},100)
 }
-
-function gerarQRTeste(){
- const c=preview,x=c.getContext('2d');
- x.imageSmoothingEnabled=false;
- x.fillStyle='#fff';x.fillRect(0,0,384,240);
- x.fillStyle='#000';x.textBaseline='top';
- x.font='bold 22px Arial';x.fillText('TESTE DE QR',10,28);
- x.font='18px Arial';x.fillText('Conteúdo:',10,70);
- x.font='bold 22px Arial';x.fillText('TESTE123',10,98);
-
- const holder=document.createElement('div');
- holder.style.position='fixed';holder.style.left='-9999px';
- document.body.appendChild(holder);
- new QRCode(holder,{text:'TESTE123',width:160,height:160,correctLevel:QRCode.CorrectLevel.H});
- setTimeout(()=>{
-   const q=holder.querySelector('canvas')||holder.querySelector('img');
-   const draw=()=>{
-     x.fillStyle='#fff';x.fillRect(194,20,180,180);
-     x.drawImage(q,204,30,160,160);
-     etiquetaURL=c.toDataURL('image/png');
-     holder.remove();
-     linktxt.textContent='TESTE TEMPORÁRIO: QR contém somente TESTE123';
-     resultado.style.display='block';
-     setStatus('✓ QR de teste pronto. Agora toque em IMPRIMIR NA B1.');
-   };
-   if(q.tagName==='IMG'&&!q.complete)q.onload=draw;else draw();
- },100);
-}
-
 async function imprimirB1(){try{if(!etiquetaURL)throw new Error('Gere a etiqueta primeiro.');btnPrint.disabled=true;setStatus('Enviando etiqueta para a B1...');if(!conectado){const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('B1 não identificada.');conectado=true}await Niimbot.printImage(etiquetaURL,{model:MODEL,size:SIZE,copies:1,density:3,onProgress:s=>setStatus('B1: '+s)});setStatus('✓ Etiqueta impressa na B1.');}catch(e){conectado=false;setStatus('Erro ao imprimir: '+e.message)}finally{btnPrint.disabled=false}}
 function novoQR(){item.value='';op.value='';linha.value='';maquina.innerHTML='<option value="">Primeiro selecione a linha</option>';maquina.disabled=true;setor.value='';resultado.style.display='none';etiquetaURL='';item.focus();window.scrollTo({top:0,behavior:'smooth'})}
 
@@ -110,7 +81,7 @@ async function abrirLeitor(){
     if(qrLendo) return;
     await qrScanner.start(
       {facingMode:"environment"},
-      {fps:10,qrbox:{width:230,height:230}},
+      {fps:15,qrbox:{width:280,height:280},aspectRatio:1.0,disableFlip:false},
       qrLido,
       ()=>{}
     );
