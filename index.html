@@ -44,7 +44,7 @@ let conectado=false, etiquetaURL="";
 function atualizarMaquinas(){const l=linha.value,s=maquina;s.innerHTML="";if(!l){s.disabled=true;s.innerHTML='<option value="">Primeiro selecione a linha</option>';return}s.disabled=false;s.innerHTML='<option value="">Selecione a máquina</option>';MAQUINAS[l].forEach(m=>s.add(new Option(m,m)))}
 function setStatus(t){document.getElementById('status').textContent=t}
 async function conectarB1(){try{if(!window.Niimbot||!Niimbot.isSupported())throw new Error('Web Bluetooth não disponível. Abra pelo Chrome em uma página HTTPS.');setStatus('Procurando B1...');const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('A impressora encontrada não foi identificada como B1 (id 4096).');conectado=true;setStatus('✓ B1 conectada — id '+p.modelId+' • protocolo '+(p.protocolVersion??'detectado'));}catch(e){conectado=false;setStatus('Erro: '+e.message)}}
-function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':it,'entry.982950365':o,'entry.1488788372':m,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
+function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':it,'entry.982950365':o,'entry.1488788372':m,'entry.705084022':s});const url=FORM+'?'+p.toString();const qrCurto='LP|'+o+'|'+it+'|'+m+'|'+s;if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(qrCurto,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
 function desenharEtiqueta(url,o,it,m){
  const c=preview,x=c.getContext('2d');
  x.imageSmoothingEnabled=false;
@@ -109,25 +109,32 @@ async function fecharLeitor(){
   scanner.style.display='none';
 }
 async function qrLido(texto){
-  // O QR da etiqueta já é o próprio link pré-preenchido do Google Forms.
-  // Ao reconhecer um QR válido deste projeto, fecha a câmera e abre o formulário.
   try{
-    const u=new URL(texto);
-    const hostOk=(u.hostname==='docs.google.com');
-    const formOk=u.pathname.includes('/forms/');
-    const it=u.searchParams.get('entry.510346288')||'';
-    const o=u.searchParams.get('entry.982950365')||'';
-    const m=u.searchParams.get('entry.1488788372')||'';
-    const s=u.searchParams.get('entry.705084022')||'';
-    if(!hostOk||!formOk||!it||!o||!m) throw new Error('QR não pertence à Liberação de Produção.');
-    statusLeitor.textContent='✓ QR lido — abrindo formulário...';
-    if(navigator.vibrate) navigator.vibrate(120);
+    let it='',o='',m='',st='',url='';
+    if(texto.startsWith('LP|')){
+      const partes=texto.split('|');
+      if(partes.length<5) throw new Error('QR incompleto.');
+      o=partes[1].trim(); it=partes[2].trim(); m=partes[3].trim(); st=partes.slice(4).join('|').trim();
+      const p=new URLSearchParams({usp:'pp_url','entry.510346288':it,'entry.982950365':o,'entry.1488788372':m,'entry.705084022':st});
+      url=FORM+'?'+p.toString();
+    }else{
+      // Compatibilidade com etiquetas antigas que ainda contêm o link completo.
+      const u=new URL(texto);
+      if(u.hostname!=='docs.google.com'||!u.pathname.includes('/forms/')) throw new Error('QR não pertence à Liberação de Produção.');
+      it=u.searchParams.get('entry.510346288')||'';
+      o=u.searchParams.get('entry.982950365')||'';
+      m=u.searchParams.get('entry.1488788372')||'';
+      st=u.searchParams.get('entry.705084022')||'';
+      url=u.href;
+    }
+    if(!it||!o||!m) throw new Error('Dados incompletos no QR.');
+    statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
+    if(navigator.vibrate) navigator.vibrate([100,50,100]);
     await pararLeitor();
     scanner.style.display='none';
-    window.location.href=u.href;
+    window.location.href=url;
   }catch(e){
     statusLeitor.textContent='QR não reconhecido: '+e.message;
-    // Mantém a câmera ativa para tentar novamente, sem reinicializá-la.
   }
 }
 
