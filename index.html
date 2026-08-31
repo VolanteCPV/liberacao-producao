@@ -8,20 +8,12 @@
 <link rel="manifest" href="./manifest.json">
 
 <style>
-body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
+body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
 </style></head><body><div class="card">
 <h1>Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • versão final otimizada</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
-<div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
-<div class="scanner" id="scanner">
-  <h2>Leitor de QR Code</h2>
-  <div class="sub">Aponte a câmera para uma etiqueta de Liberação de Produção.</div>
-  <div id="reader"><video id="qrVideo" playsinline muted style="width:100%;display:block;border-radius:10px;background:#000"></video></div>
-  <div class="status" id="statusLeitor">Câmera aguardando início.</div>
-  <button class="gray" type="button" onclick="fecharLeitor()">FECHAR LEITOR</button>
-</div>
-<button class="gray" type="button" onclick="abrirConsulta()">🔎 CONSULTAR PRODUÇÃO</button>
+<div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="gray" type="button" onclick="abrirConsulta()">🔎 CONSULTAR PRODUÇÃO</button>
 <div class="consulta" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
 <label>OP</label><input id="qop" inputmode="numeric" placeholder="Ex.: 577110">
 <label>Item</label><input id="qitem" inputmode="numeric" placeholder="Ex.: 869">
@@ -33,7 +25,6 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
 const MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","444","402"],"LSR":["253","252","185"]};
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
@@ -44,7 +35,7 @@ let conectado=false, etiquetaURL="";
 function atualizarMaquinas(){const l=linha.value,s=maquina;s.innerHTML="";if(!l){s.disabled=true;s.innerHTML='<option value="">Primeiro selecione a linha</option>';return}s.disabled=false;s.innerHTML='<option value="">Selecione a máquina</option>';MAQUINAS[l].forEach(m=>s.add(new Option(m,m)))}
 function setStatus(t){document.getElementById('status').textContent=t}
 async function conectarB1(){try{if(!window.Niimbot||!Niimbot.isSupported())throw new Error('Web Bluetooth não disponível. Abra pelo Chrome em uma página HTTPS.');setStatus('Procurando B1...');const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('A impressora encontrada não foi identificada como B1 (id 4096).');conectado=true;setStatus('✓ B1 conectada — id '+p.modelId+' • protocolo '+(p.protocolVersion??'detectado'));}catch(e){conectado=false;setStatus('Erro: '+e.message)}}
-function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':s});const url=FORM+'?'+p.toString();const qrCurto='LP|'+o+'|'+it+'|'+m+'|'+s;if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(qrCurto,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
+function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':it,'entry.982950365':o,'entry.1488788372':m,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
 function desenharEtiqueta(url,o,it,m){
  const c=preview,x=c.getContext('2d');
  x.imageSmoothingEnabled=false;
@@ -69,49 +60,10 @@ function desenharEtiqueta(url,o,it,m){
 async function imprimirB1(){try{if(!etiquetaURL)throw new Error('Gere a etiqueta primeiro.');btnPrint.disabled=true;setStatus('Enviando etiqueta para a B1...');if(!conectado){const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('B1 não identificada.');conectado=true}await Niimbot.printImage(etiquetaURL,{model:MODEL,size:SIZE,copies:1,density:3,onProgress:s=>setStatus('B1: '+s)});setStatus('✓ Etiqueta impressa na B1.');}catch(e){conectado=false;setStatus('Erro ao imprimir: '+e.message)}finally{btnPrint.disabled=false}}
 function novoQR(){item.value='';op.value='';linha.value='';maquina.innerHTML='<option value="">Primeiro selecione a linha</option>';maquina.disabled=true;setor.value='';resultado.style.display='none';etiquetaURL='';item.focus();window.scrollTo({top:0,behavior:'smooth'})}
 
-
-let qrScanner=null, qrLendo=false;
-function setLeitor(t){document.getElementById('statusLeitor').textContent=t}
-async function abrirLeitor(){
- const box=document.getElementById('scanner'); box.style.display='block'; box.scrollIntoView({behavior:'smooth'}); setLeitor('🟡 Abrindo câmera...');
- try{
-  await pararLeitor();
-  if(!window.ZXing) throw new Error('Leitor QR não carregou. Verifique a internet.');
-  qrLendo=true; qrScanner=new ZXing.BrowserQRCodeReader();
-  qrScanner.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},'qrVideo',(result,err)=>{
-   if(result&&qrLendo){qrLendo=false;const texto=result.getText?result.getText():String(result.text||result);qrLido(texto);}
-  });
-  setLeitor('🟢 Câmera ativa — enquadre o QR e mantenha firme.');
- }catch(e){qrLendo=false;await pararLeitor();setLeitor('Erro ao abrir câmera: '+e.message)}
-}
-async function pararLeitor(){
- qrLendo=false;
- if(qrScanner){try{qrScanner.reset()}catch(e){} qrScanner=null}
- const v=document.getElementById('qrVideo');
- if(v&&v.srcObject){try{v.srcObject.getTracks().forEach(x=>x.stop())}catch(e){} v.srcObject=null}
-}
-async function fecharLeitor(){await pararLeitor();document.getElementById('scanner').style.display='none'}
-async function qrLido(texto){
- try{
-  setLeitor('✅ QR reconhecido — abrindo formulário...');
-  let it='',o='',m='',st='',url='';
-  if(texto.startsWith('LP|')){
-   const partes=texto.split('|'); if(partes.length<5)throw new Error('QR incompleto.');
-   o=partes[1].trim();it=partes[2].trim();m=partes[3].trim();st=partes.slice(4).join('|').trim();
-   const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':st});
-   url=FORM+'?'+p.toString();
-  }else{
-   const u=new URL(texto);if(u.hostname!=='docs.google.com'||!u.pathname.includes('/forms/'))throw new Error('QR não pertence à Liberação de Produção.');
-   m=u.searchParams.get('entry.510346288')||'';o=u.searchParams.get('entry.982950365')||'';it=u.searchParams.get('entry.1488788372')||'';st=u.searchParams.get('entry.705084022')||'';url=u.href;
-  }
-  if(!it||!o||!m)throw new Error('Dados incompletos no QR.');
-  if(navigator.vibrate)navigator.vibrate([100,50,100]);await pararLeitor();setTimeout(()=>{window.location.assign(url)},350);
- }catch(e){qrLendo=true;setLeitor('QR não reconhecido: '+e.message)}
-}
 function abrirConsulta(){consulta.style.display=consulta.style.display==='block'?'none':'block';if(consulta.style.display==='block')consulta.scrollIntoView({behavior:'smooth'})}
 function parseCSV(t){let a=[],r=[],f='',q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'){r.push(f.replace(/\r$/,''));a.push(r);r=[];f=''}else f+=c}if(f||r.length){r.push(f);a.push(r)}return a}
 function norm(s){return String(s??'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
-function col(h,n){let x=h.map(norm);for(let z of n){let i=x.findIndex(v=>v===norm(z));if(i>=0)return i}for(let z of n){let i=x.findIndex(v=>v.startsWith(norm(z)));if(i>=0)return i}return -1}
+function col(h,n){let x=h.map(norm);for(let z of n){let i=x.findIndex(v=>v===norm(z)||v.includes(norm(z)));if(i>=0)return i}return -1}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function iso(v){let m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:''}
 async function consultarProducao(){statusConsulta.textContent='Consultando planilha...';listaConsulta.innerHTML='';try{let x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Não foi possível acessar a planilha.');let a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));let h=a.shift();let D=col(h,['Carimbo de data/hora','Data']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),S=col(h,['Setor']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Observações','Observacao']);let v=(r,i)=>i>=0?(r[i]??''):'';let z=a.filter(r=>(!qop.value||norm(v(r,O)).includes(norm(qop.value)))&&(!qitem.value||norm(v(r,I)).includes(norm(qitem.value)))&&(!qmaq.value||norm(v(r,M)).includes(norm(qmaq.value)))&&(!qdata.value||iso(v(r,D))===qdata.value)).reverse();statusConsulta.textContent=z.length?z.length+' registro(s) encontrado(s).':'Nenhum registro encontrado.';listaConsulta.innerHTML=z.slice(0,100).map(r=>`<div class="result-card"><strong>OP ${esc(v(r,O)||'-')}</strong> • Item ${esc(v(r,I)||'-')} • Máquina ${esc(v(r,M)||'-')}<div class="meta">${esc(v(r,D))}${v(r,S)?' • '+esc(v(r,S)):''}</div>${v(r,T)?'<div><strong>Tipo:</strong> '+esc(v(r,T))+'</div>':''}${v(r,V)?'<div><strong>Volante:</strong> '+esc(v(r,V))+'</div>':''}${v(r,SI)?'<div><strong>Situação:</strong> '+esc(v(r,SI))+'</div>':''}${v(r,OB)?'<div><strong>Observações:</strong> '+esc(v(r,OB))+'</div>':''}</div>`).join('')}catch(e){statusConsulta.textContent='Erro na consulta: '+e.message}}
