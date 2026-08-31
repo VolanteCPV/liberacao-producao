@@ -109,20 +109,12 @@ async function qrLido(texto){
     const o=u.searchParams.get('entry.982950365')||'';
     const it=u.searchParams.get('entry.1488788372')||'';
     const s=u.searchParams.get('entry.705084022')||'';
-    if(!it&&!o&&!m) throw new Error('Este QR não contém dados de Liberação de Produção.');
-    statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
-    const acao=confirm('QR LIDO\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s+'\n\nOK = abrir formulário preenchido\nCANCELAR = consultar produção');
-    if(acao){
-      scanner.style.display='none';
-      statusLeitor.textContent='✓ QR lido — abrindo formulário...';
-      window.location.assign(u.href);
-    }else{
-      scanner.style.display='none';
-      consulta.style.display='block';
-      qop.value=o;qitem.value=it;qmaq.value=m;qdata.value='';
-      await consultarProducao();
-      consulta.scrollIntoView({behavior:'smooth'});
-    }
+
+    if(!it||!o||!m) throw new Error('Este QR não contém dados completos de Liberação de Produção.');
+
+    statusLeitor.textContent='✓ QR reconhecido — abrindo formulário...';
+    if(navigator.vibrate) navigator.vibrate(100);
+    window.location.assign(u.href);
   }catch(e){
     statusLeitor.textContent='QR não reconhecido: '+e.message;
     setTimeout(()=>abrirLeitor(),1200);
