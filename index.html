@@ -72,25 +72,35 @@ function novoQR(){item.value='';op.value='';linha.value='';maquina.innerHTML='<o
 
 let qrScanner=null, qrLendo=false;
 async function abrirLeitor(){
- scanner.style.display='block';scanner.scrollIntoView({behavior:'smooth'});statusLeitor.textContent='Abrindo câmera...';
- try{
-  if(!window.Html5Qrcode)throw new Error('Leitor QR não carregou.');
-  if(qrScanner){try{if(qrLendo)await qrScanner.stop()}catch(e){}try{await qrScanner.clear()}catch(e){}}
-  qrScanner=new Html5Qrcode("reader");qrLendo=false;
-  let camera={facingMode:"environment"};
+  scanner.style.display='block';
+  scanner.scrollIntoView({behavior:'smooth'});
+  statusLeitor.textContent='Abrindo câmera...';
   try{
-   const cams=await Html5Qrcode.getCameras();
-   if(cams&&cams.length){const back=cams.find(c=>/back|rear|environment|traseira/i.test(c.label));camera=(back||cams[cams.length-1]).id}
-  }catch(e){}
-  await qrScanner.start(camera,{fps:20,qrbox:(w,h)=>{let s=Math.floor(Math.min(w,h)*.82);return{width:s,height:s}},aspectRatio:1,disableFlip:false},qrLido,()=>{});
-  qrLendo=true;statusLeitor.textContent='Câmera ativa — centralize o QR e mantenha firme.';
-  setTimeout(async()=>{try{
-   const v=document.querySelector('#reader video'),tr=v?.srcObject?.getVideoTracks?.()[0],caps=tr?.getCapabilities?.()||{},adv={};
-   if(caps.focusMode?.includes?.('continuous'))adv.focusMode='continuous';
-   if(caps.zoom){let mn=Number(caps.zoom.min??1),mx=Number(caps.zoom.max??1);if(mx>mn)adv.zoom=Math.min(mx,Math.max(mn,1.15))}
-   if(tr&&Object.keys(adv).length)await tr.applyConstraints({advanced:[adv]});
-  }catch(e){}},500);
- }catch(e){qrLendo=false;statusLeitor.textContent='Erro ao abrir câmera: '+e.message}
+    if(!window.Html5Qrcode) throw new Error('Leitor QR não carregou. Verifique a internet.');
+    if(!qrScanner) qrScanner=new Html5Qrcode("reader");
+    if(qrLendo) return;
+    await qrScanner.start(
+      {facingMode:{exact:"environment"}},
+      {fps:12,qrbox:(vw,vh)=>{const lado=Math.floor(Math.min(vw,vh)*0.78);return {width:lado,height:lado};},aspectRatio:1.0,disableFlip:false},
+      qrLido,
+      ()=>{}
+    );
+    qrLendo=true;
+    try{
+      const video=document.querySelector('#reader video');
+      const track=video?.srcObject?.getVideoTracks?.()[0];
+      if(track){
+        const caps=track.getCapabilities?track.getCapabilities():{};
+        const adv=[];
+        if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous'))adv.push({focusMode:'continuous'});
+        if(caps.zoom&&typeof caps.zoom.min==='number'){const z=Math.min(Math.max(1.25,caps.zoom.min),caps.zoom.max);adv.push({zoom:z});}
+        if(adv.length)await track.applyConstraints({advanced:adv});
+      }
+    }catch(e){}
+    statusLeitor.textContent='Câmera ativa — centralize o QR e aguarde o foco.';
+  }catch(e){
+    statusLeitor.textContent='Erro ao abrir câmera: '+e.message;
+  }
 }
 async function pararLeitor(){
   if(qrScanner&&qrLendo){
@@ -110,12 +120,20 @@ async function qrLido(texto){
     const o=u.searchParams.get('entry.982950365')||'';
     const it=u.searchParams.get('entry.1488788372')||'';
     const s=u.searchParams.get('entry.705084022')||'';
-
-    if(!it||!o||!m) throw new Error('Este QR não contém dados completos de Liberação de Produção.');
-
-    statusLeitor.textContent='✓ QR reconhecido — abrindo formulário...';
-    if(navigator.vibrate) navigator.vibrate(100);
-    window.location.assign(u.href);
+    if(!it&&!o&&!m) throw new Error('Este QR não contém dados de Liberação de Produção.');
+    statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
+    const acao=confirm('QR LIDO\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s+'\n\nOK = abrir formulário preenchido\nCANCELAR = consultar produção');
+    if(acao){
+      scanner.style.display='none';
+      statusLeitor.textContent='✓ QR lido — abrindo formulário...';
+      window.location.assign(u.href);
+    }else{
+      scanner.style.display='none';
+      consulta.style.display='block';
+      qop.value=o;qitem.value=it;qmaq.value=m;qdata.value='';
+      await consultarProducao();
+      consulta.scrollIntoView({behavior:'smooth'});
+    }
   }catch(e){
     statusLeitor.textContent='QR não reconhecido: '+e.message;
     setTimeout(()=>abrirLeitor(),1200);
