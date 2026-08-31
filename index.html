@@ -10,7 +10,7 @@
 <style>
 body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
 </style></head><body><div class="card">
-<h1>Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms — teste final</div>
+<h1>Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
 <div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
@@ -111,14 +111,11 @@ async function qrLido(texto){
     const s=u.searchParams.get('entry.705084022')||'';
     if(!it&&!o&&!m) throw new Error('Este QR não contém dados de Liberação de Produção.');
     statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
-    const acao=confirm('QR LIDO\\n\\nOP: '+o+'\\nItem: '+it+'\\nMáquina: '+m+'\\nSetor: '+s+'\\n\\nOK = preencher dados\\nCANCELAR = consultar produção');
+    const acao=confirm('QR LIDO\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s+'\n\nOK = abrir formulário preenchido\nCANCELAR = consultar produção');
     if(acao){
-      item.value=it; op.value=o;
-      let linhaAchada=Object.keys(MAQUINAS).find(l=>MAQUINAS[l].includes(m));
-      if(linhaAchada){linha.value=linhaAchada;atualizarMaquinas();maquina.value=m}
-      setor.value=s;
       scanner.style.display='none';
-      item.scrollIntoView({behavior:'smooth'});
+      statusLeitor.textContent='✓ QR lido — abrindo formulário...';
+      window.location.assign(u.href);
     }else{
       scanner.style.display='none';
       consulta.style.display='block';
