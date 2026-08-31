@@ -17,7 +17,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <div class="scanner" id="scanner">
   <h2>Leitor de QR Code</h2>
   <div class="sub">Aponte a câmera para uma etiqueta de Liberação de Produção.</div>
-  <div id="reader"></div>
+  <div id="reader"><video id="qrVideo" playsinline muted style="width:100%;display:block;border-radius:10px;background:#000"></video></div>
   <div class="status" id="statusLeitor">Câmera aguardando início.</div>
   <button class="gray" type="button" onclick="fecharLeitor()">FECHAR LEITOR</button>
 </div>
@@ -44,7 +44,7 @@ let conectado=false, etiquetaURL="";
 function atualizarMaquinas(){const l=linha.value,s=maquina;s.innerHTML="";if(!l){s.disabled=true;s.innerHTML='<option value="">Primeiro selecione a linha</option>';return}s.disabled=false;s.innerHTML='<option value="">Selecione a máquina</option>';MAQUINAS[l].forEach(m=>s.add(new Option(m,m)))}
 function setStatus(t){document.getElementById('status').textContent=t}
 async function conectarB1(){try{if(!window.Niimbot||!Niimbot.isSupported())throw new Error('Web Bluetooth não disponível. Abra pelo Chrome em uma página HTTPS.');setStatus('Procurando B1...');const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('A impressora encontrada não foi identificada como B1 (id 4096).');conectado=true;setStatus('✓ B1 conectada — id '+p.modelId+' • protocolo '+(p.protocolVersion??'detectado'));}catch(e){conectado=false;setStatus('Erro: '+e.message)}}
-function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':it,'entry.982950365':o,'entry.1488788372':m,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
+function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':s});const url=FORM+'?'+p.toString();const qrCurto='LP|'+o+'|'+it+'|'+m+'|'+s;if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(qrCurto,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
 function desenharEtiqueta(url,o,it,m){
  const c=preview,x=c.getContext('2d');
  x.imageSmoothingEnabled=false;
@@ -71,66 +71,43 @@ function novoQR(){item.value='';op.value='';linha.value='';maquina.innerHTML='<o
 
 
 let qrScanner=null, qrLendo=false;
+function setLeitor(t){document.getElementById('statusLeitor').textContent=t}
 async function abrirLeitor(){
-  scanner.style.display='block';
-  scanner.scrollIntoView({behavior:'smooth'});
-  statusLeitor.textContent='Abrindo câmera...';
-  try{
-    if(!window.ZXing) throw new Error('Leitor QR não carregou. Verifique a internet.');
-    if(qrLendo) return;
-    qrScanner=new ZXing.BrowserQRCodeReader();
-    qrLendo=true;
-    statusLeitor.textContent='Câmera ativa — aproxime ou afaste lentamente o QR.';
-    await qrScanner.decodeFromConstraints(
-      {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},
-      'reader',
-      (result,err)=>{
-        if(result && qrLendo){
-          qrLendo=false;
-          const texto=result.getText ? result.getText() : String(result.text||result);
-          qrLido(texto);
-        }
-      }
-    );
-  }catch(e){
-    qrLendo=false;
-    statusLeitor.textContent='Erro ao abrir câmera: '+e.message;
-  }
+ const box=document.getElementById('scanner'); box.style.display='block'; box.scrollIntoView({behavior:'smooth'}); setLeitor('🟡 Abrindo câmera...');
+ try{
+  await pararLeitor();
+  if(!window.ZXing) throw new Error('Leitor QR não carregou. Verifique a internet.');
+  qrLendo=true; qrScanner=new ZXing.BrowserQRCodeReader();
+  qrScanner.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},'qrVideo',(result,err)=>{
+   if(result&&qrLendo){qrLendo=false;const texto=result.getText?result.getText():String(result.text||result);qrLido(texto);}
+  });
+  setLeitor('🟢 Câmera ativa — enquadre o QR e mantenha firme.');
+ }catch(e){qrLendo=false;await pararLeitor();setLeitor('Erro ao abrir câmera: '+e.message)}
 }
 async function pararLeitor(){
-  qrLendo=false;
-  if(qrScanner){
-    try{qrScanner.reset()}catch(e){}
-    qrScanner=null;
-  }
+ qrLendo=false;
+ if(qrScanner){try{qrScanner.reset()}catch(e){} qrScanner=null}
+ const v=document.getElementById('qrVideo');
+ if(v&&v.srcObject){try{v.srcObject.getTracks().forEach(x=>x.stop())}catch(e){} v.srcObject=null}
 }
-async function fecharLeitor(){
-  await pararLeitor();
-  scanner.style.display='none';
-}
+async function fecharLeitor(){await pararLeitor();document.getElementById('scanner').style.display='none'}
 async function qrLido(texto){
-  // O QR da etiqueta já é o próprio link pré-preenchido do Google Forms.
-  // Ao reconhecer um QR válido deste projeto, fecha a câmera e abre o formulário.
-  try{
-    const u=new URL(texto);
-    const hostOk=(u.hostname==='docs.google.com');
-    const formOk=u.pathname.includes('/forms/');
-    const it=u.searchParams.get('entry.510346288')||'';
-    const o=u.searchParams.get('entry.982950365')||'';
-    const m=u.searchParams.get('entry.1488788372')||'';
-    const s=u.searchParams.get('entry.705084022')||'';
-    if(!hostOk||!formOk||!it||!o||!m) throw new Error('QR não pertence à Liberação de Produção.');
-    statusLeitor.textContent='✓ QR lido — abrindo formulário...';
-    if(navigator.vibrate) navigator.vibrate(120);
-    await pararLeitor();
-    scanner.style.display='none';
-    window.location.href=u.href;
-  }catch(e){
-    statusLeitor.textContent='QR não reconhecido: '+e.message;
-    // Mantém a câmera ativa para tentar novamente, sem reinicializá-la.
+ try{
+  setLeitor('✅ QR reconhecido — abrindo formulário...');
+  let it='',o='',m='',st='',url='';
+  if(texto.startsWith('LP|')){
+   const partes=texto.split('|'); if(partes.length<5)throw new Error('QR incompleto.');
+   o=partes[1].trim();it=partes[2].trim();m=partes[3].trim();st=partes.slice(4).join('|').trim();
+   const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':st});
+   url=FORM+'?'+p.toString();
+  }else{
+   const u=new URL(texto);if(u.hostname!=='docs.google.com'||!u.pathname.includes('/forms/'))throw new Error('QR não pertence à Liberação de Produção.');
+   m=u.searchParams.get('entry.510346288')||'';o=u.searchParams.get('entry.982950365')||'';it=u.searchParams.get('entry.1488788372')||'';st=u.searchParams.get('entry.705084022')||'';url=u.href;
   }
+  if(!it||!o||!m)throw new Error('Dados incompletos no QR.');
+  if(navigator.vibrate)navigator.vibrate([100,50,100]);await pararLeitor();setTimeout(()=>{window.location.assign(url)},350);
+ }catch(e){qrLendo=true;setLeitor('QR não reconhecido: '+e.message)}
 }
-
 function abrirConsulta(){consulta.style.display=consulta.style.display==='block'?'none':'block';if(consulta.style.display==='block')consulta.scrollIntoView({behavior:'smooth'})}
 function parseCSV(t){let a=[],r=[],f='',q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'){r.push(f.replace(/\r$/,''));a.push(r);r=[];f=''}else f+=c}if(f||r.length){r.push(f);a.push(r)}return a}
 function norm(s){return String(s??'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
