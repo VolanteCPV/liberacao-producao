@@ -33,7 +33,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script>
 const MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","444","402"],"LSR":["253","252","185"]};
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
@@ -76,25 +76,32 @@ async function abrirLeitor(){
   scanner.scrollIntoView({behavior:'smooth'});
   statusLeitor.textContent='Abrindo câmera...';
   try{
-    if(!window.Html5Qrcode) throw new Error('Leitor QR não carregou. Verifique a internet.');
-    if(!qrScanner) qrScanner=new Html5Qrcode("reader");
+    if(!window.ZXing) throw new Error('Leitor QR não carregou. Verifique a internet.');
     if(qrLendo) return;
-    await qrScanner.start(
-      {facingMode:"environment"},
-      {fps:10,qrbox:{width:230,height:230}},
-      qrLido,
-      ()=>{}
-    );
+    qrScanner=new ZXing.BrowserQRCodeReader();
     qrLendo=true;
-    statusLeitor.textContent='Câmera ativa — aponte para o QR Code.';
+    statusLeitor.textContent='Câmera ativa — aproxime ou afaste lentamente o QR.';
+    await qrScanner.decodeFromConstraints(
+      {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},
+      'reader',
+      (result,err)=>{
+        if(result && qrLendo){
+          qrLendo=false;
+          const texto=result.getText ? result.getText() : String(result.text||result);
+          qrLido(texto);
+        }
+      }
+    );
   }catch(e){
+    qrLendo=false;
     statusLeitor.textContent='Erro ao abrir câmera: '+e.message;
   }
 }
 async function pararLeitor(){
-  if(qrScanner&&qrLendo){
-    try{await qrScanner.stop()}catch(e){}
-    qrLendo=false;
+  qrLendo=false;
+  if(qrScanner){
+    try{qrScanner.reset()}catch(e){}
+    qrScanner=null;
   }
 }
 async function fecharLeitor(){
