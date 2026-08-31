@@ -72,24 +72,25 @@ function novoQR(){item.value='';op.value='';linha.value='';maquina.innerHTML='<o
 
 let qrScanner=null, qrLendo=false;
 async function abrirLeitor(){
-  scanner.style.display='block';
-  scanner.scrollIntoView({behavior:'smooth'});
-  statusLeitor.textContent='Abrindo câmera...';
+ scanner.style.display='block';scanner.scrollIntoView({behavior:'smooth'});statusLeitor.textContent='Abrindo câmera...';
+ try{
+  if(!window.Html5Qrcode)throw new Error('Leitor QR não carregou.');
+  if(qrScanner){try{if(qrLendo)await qrScanner.stop()}catch(e){}try{await qrScanner.clear()}catch(e){}}
+  qrScanner=new Html5Qrcode("reader");qrLendo=false;
+  let camera={facingMode:"environment"};
   try{
-    if(!window.Html5Qrcode) throw new Error('Leitor QR não carregou. Verifique a internet.');
-    if(!qrScanner) qrScanner=new Html5Qrcode("reader");
-    if(qrLendo) return;
-    await qrScanner.start(
-      {facingMode:"environment"},
-      {fps:15,qrbox:{width:280,height:280},aspectRatio:1.0,disableFlip:false},
-      qrLido,
-      ()=>{}
-    );
-    qrLendo=true;
-    statusLeitor.textContent='Câmera ativa — aponte para o QR Code.';
-  }catch(e){
-    statusLeitor.textContent='Erro ao abrir câmera: '+e.message;
-  }
+   const cams=await Html5Qrcode.getCameras();
+   if(cams&&cams.length){const back=cams.find(c=>/back|rear|environment|traseira/i.test(c.label));camera=(back||cams[cams.length-1]).id}
+  }catch(e){}
+  await qrScanner.start(camera,{fps:20,qrbox:(w,h)=>{let s=Math.floor(Math.min(w,h)*.82);return{width:s,height:s}},aspectRatio:1,disableFlip:false},qrLido,()=>{});
+  qrLendo=true;statusLeitor.textContent='Câmera ativa — centralize o QR e mantenha firme.';
+  setTimeout(async()=>{try{
+   const v=document.querySelector('#reader video'),tr=v?.srcObject?.getVideoTracks?.()[0],caps=tr?.getCapabilities?.()||{},adv={};
+   if(caps.focusMode?.includes?.('continuous'))adv.focusMode='continuous';
+   if(caps.zoom){let mn=Number(caps.zoom.min??1),mx=Number(caps.zoom.max??1);if(mx>mn)adv.zoom=Math.min(mx,Math.max(mn,1.15))}
+   if(tr&&Object.keys(adv).length)await tr.applyConstraints({advanced:[adv]});
+  }catch(e){}},500);
+ }catch(e){qrLendo=false;statusLeitor.textContent='Erro ao abrir câmera: '+e.message}
 }
 async function pararLeitor(){
   if(qrScanner&&qrLendo){
