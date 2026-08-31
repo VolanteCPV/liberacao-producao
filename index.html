@@ -195,9 +195,9 @@ async function qrLido(texto){
       if(u.hostname!=='docs.google.com'||!u.pathname.includes('/forms/'))
         throw new Error('QR não pertence à Liberação de Produção.');
 
-      m=u.searchParams.get('entry.510346288')||'';
+      it=u.searchParams.get('entry.510346288')||'';
       o=u.searchParams.get('entry.982950365')||'';
-      it=u.searchParams.get('entry.1488788372')||'';
+      m=u.searchParams.get('entry.1488788372')||'';
       st=u.searchParams.get('entry.705084022')||'';
       url=u.href;
     }
