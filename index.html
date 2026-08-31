@@ -105,9 +105,9 @@ async function qrLido(texto){
   await pararLeitor();
   try{
     const u=new URL(texto);
-    const it=u.searchParams.get('entry.510346288')||'';
+    const m=u.searchParams.get('entry.510346288')||'';
     const o=u.searchParams.get('entry.982950365')||'';
-    const m=u.searchParams.get('entry.1488788372')||'';
+    const it=u.searchParams.get('entry.1488788372')||'';
     const s=u.searchParams.get('entry.705084022')||'';
     if(!it&&!o&&!m) throw new Error('Este QR não contém dados de Liberação de Produção.');
     statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
