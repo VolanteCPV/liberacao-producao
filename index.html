@@ -10,7 +10,7 @@
 <style>
 body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
 </style></head><body><div class="card">
-<h1>Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
+<h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
 <div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
@@ -30,6 +30,15 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <button type="button" onclick="consultarProducao()">PESQUISAR</button>
 <button class="gray" type="button" onclick="limparConsulta()">LIMPAR PESQUISA</button>
 <div class="status" id="statusConsulta">Informe um ou mais filtros e toque em PESQUISAR.</div><div id="listaConsulta"></div></div>
+</div>
+<div id="adminBox" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px">
+<h2>Correção administrativa</h2><div class="sub">Área experimental — o horário original é preservado.</div>
+<label>OP</label><input id="adminOP" inputmode="numeric">
+<label>Item</label><input id="adminItem" inputmode="numeric">
+<label>Máquina</label><input id="adminMaq" inputmode="numeric">
+<button type="button" onclick="buscarAdmin()">LOCALIZAR REGISTRO</button>
+<div id="adminResultado"></div>
+<button class="gray" type="button" onclick="fecharAdmin()">FECHAR MODO ADMIN</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
@@ -140,6 +149,33 @@ async function qrLido(texto){
   }
 }
 
+
+const ADMIN_SCRIPT_URL="";
+let adminTap=0,adminTimer=null,adminRegistro=null;
+document.getElementById('tituloApp').addEventListener('click',()=>{
+ adminTap++;clearTimeout(adminTimer);adminTimer=setTimeout(()=>adminTap=0,500);
+ if(adminTap>=2){adminTap=0;const p=prompt('Modo administrativo\n\nPIN:');if(p==='2580'){adminBox.style.display='block';adminBox.scrollIntoView({behavior:'smooth'})}else if(p!==null)alert('PIN incorreto.')}
+});
+function fecharAdmin(){adminBox.style.display='none';adminResultado.innerHTML='';adminRegistro=null}
+async function buscarAdmin(){
+ const opv=adminOP.value.trim(),itv=adminItem.value.trim(),mqv=adminMaq.value.trim();
+ if(!opv&&!itv&&!mqv){adminResultado.innerHTML='<div class="status">Informe OP, Item ou Máquina.</div>';return}
+ adminResultado.innerHTML='<div class="status">Localizando...</div>';
+ try{
+  const x=await fetch(CSV_URL,{cache:'no-store'}),a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim())),h=a.shift();
+  const D=col(h,['Carimbo de data/hora','Data']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),v=(r,i)=>i>=0?(r[i]??''):'';
+  const z=a.map((r,i)=>({r,linha:i+2})).filter(x=>(!opv||norm(v(x.r,O))===norm(opv))&&(!itv||norm(v(x.r,I))===norm(itv))&&(!mqv||norm(v(x.r,M))===norm(mqv))).reverse()[0];
+  if(!z){adminResultado.innerHTML='<div class="status">Nenhum registro encontrado.</div>';return}
+  adminRegistro={linha:z.linha,original:v(z.r,D),op:v(z.r,O),item:v(z.r,I),maquina:v(z.r,M)};
+  adminResultado.innerHTML=`<div class="result-card"><strong>Registro localizado</strong><div class="meta">Original: ${esc(v(z.r,D))}</div><div>OP ${esc(v(z.r,O))} • Item ${esc(v(z.r,I))} • Máquina ${esc(v(z.r,M))}</div><label>Nova data/hora</label><input id="adminNovaData" type="datetime-local"><label>Motivo</label><input id="adminMotivo" placeholder="Motivo da correção"><button class="orange" type="button" onclick="salvarAdmin()">SALVAR CORREÇÃO</button><div class="status" id="adminStatus">Aguardando.</div></div>`;
+ }catch(e){adminResultado.innerHTML='<div class="status">Erro: '+esc(e.message)+'</div>'}
+}
+async function salvarAdmin(){
+ const nova=adminNovaData.value,motivo=adminMotivo.value.trim();
+ if(!nova||!motivo){adminStatus.textContent='Informe nova data/hora e motivo.';return}
+ if(!ADMIN_SCRIPT_URL){adminStatus.textContent='Estrutura pronta. Falta conectar o Apps Script.';return}
+ try{adminStatus.textContent='Salvando...';const b=new URLSearchParams({...adminRegistro,novaDataHora:nova,motivo});const r=await fetch(ADMIN_SCRIPT_URL,{method:'POST',body:b});const j=await r.json();if(!j.ok)throw Error(j.erro||'Falha');adminStatus.textContent='✓ Correção registrada.'}catch(e){adminStatus.textContent='Erro: '+e.message}
+}
 function abrirConsulta(){consulta.style.display=consulta.style.display==='block'?'none':'block';if(consulta.style.display==='block')consulta.scrollIntoView({behavior:'smooth'})}
 function parseCSV(t){let a=[],r=[],f='',q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'){r.push(f.replace(/\r$/,''));a.push(r);r=[];f=''}else f+=c}if(f||r.length){r.push(f);a.push(r)}return a}
 function norm(s){return String(s??'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
