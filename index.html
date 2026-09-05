@@ -174,7 +174,19 @@ async function salvarAdmin(){
  const nova=adminNovaData.value,motivo=adminMotivo.value.trim();
  if(!nova||!motivo){adminStatus.textContent='Informe nova data/hora e motivo.';return}
  if(!ADMIN_SCRIPT_URL){adminStatus.textContent='Estrutura pronta. Falta conectar o Apps Script.';return}
- try{adminStatus.textContent='Salvando...';const b=new URLSearchParams({...adminRegistro,novaDataHora:nova,motivo});const r=await fetch(ADMIN_SCRIPT_URL,{method:'POST',body:b});const j=await r.json();if(!j.ok)throw Error(j.erro||'Falha');adminStatus.textContent='✓ Correção registrada.'}catch(e){adminStatus.textContent='Erro: '+e.message}
+ try{
+  adminStatus.textContent='Enviando correção...';
+  const b=new URLSearchParams({...adminRegistro,novaDataHora:nova,motivo});
+  await fetch(ADMIN_SCRIPT_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+    body:b.toString()
+  });
+  adminStatus.textContent='✓ Correção enviada. Confira a planilha.';
+}catch(e){
+  adminStatus.textContent='Erro ao enviar: '+e.message;
+}
 }
 function abrirConsulta(){consulta.style.display=consulta.style.display==='block'?'none':'block';if(consulta.style.display==='block')consulta.scrollIntoView({behavior:'smooth'})}
 function parseCSV(t){let a=[],r=[],f='',q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'){r.push(f.replace(/\r$/,''));a.push(r);r=[];f=''}else f+=c}if(f||r.length){r.push(f);a.push(r)}return a}
