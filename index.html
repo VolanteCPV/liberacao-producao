@@ -30,6 +30,11 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
  .chart-card,.kpi{break-inside:avoid;border:1px solid #bbb}
  .report-grid{grid-template-columns:repeat(4,1fr)}
 }
+
+.admin-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;align-items:center;justify-content:center;padding:20px}
+.admin-modal{width:min(420px,100%);background:#151b23;border:1px solid #334155;border-radius:16px;padding:20px;box-sizing:border-box}
+.admin-modal h3{margin:0 0 8px}.admin-modal .sub{margin-bottom:12px}
+.admin-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style></head><body><div class="card">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
@@ -89,6 +94,20 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <button class="gray" type="button" onclick="fecharRelatorio()">FECHAR RELATÓRIO</button>
 </div>
 </div>
+
+<div class="admin-modal-bg" id="adminPinModal">
+  <div class="admin-modal">
+    <h3>Modo administrativo</h3>
+    <div class="sub">Digite o PIN para continuar.</div>
+    <input id="adminPinInput" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
+    <div class="admin-modal-actions">
+      <button class="gray" type="button" onclick="fecharPinAdmin()">CANCELAR</button>
+      <button type="button" onclick="confirmarPinAdmin()">ENTRAR</button>
+    </div>
+    <div class="status" id="adminPinStatus" style="display:none"></div>
+  </div>
+</div>
+
 <div id="adminBox" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px">
 <h2>Correção administrativa</h2><div class="sub">Área experimental — o horário original é preservado.</div>
 <label>OP</label><input id="adminOP" inputmode="numeric">
@@ -188,20 +207,11 @@ async function qrLido(texto){
     const o=u.searchParams.get('entry.982950365')||'';
     const it=u.searchParams.get('entry.1488788372')||'';
     const s=u.searchParams.get('entry.705084022')||'';
-    if(!it&&!o&&!m) throw new Error('Este QR não contém dados de Liberação de Produção.');
-    statusLeitor.textContent='✓ QR lido — OP '+o+' • Item '+it+' • Máquina '+m;
-    const acao=confirm('QR LIDO\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s+'\n\nOK = abrir formulário preenchido\nCANCELAR = consultar produção');
-    if(acao){
-      scanner.style.display='none';
-      statusLeitor.textContent='✓ QR lido — abrindo formulário...';
-      window.location.assign(u.href);
-    }else{
-      scanner.style.display='none';
-      consulta.style.display='block';
-      qop.value=o;qitem.value=it;qmaq.value=m;qdata.value='';
-      await consultarProducao();
-      consulta.scrollIntoView({behavior:'smooth'});
-    }
+    if(!it||!o||!m) throw new Error('Este QR não contém dados completos de Liberação de Produção.');
+    statusLeitor.textContent='✓ QR reconhecido — abrindo formulário...';
+    if(navigator.vibrate) navigator.vibrate(100);
+    scanner.style.display='none';
+    window.location.assign(u.href);
   }catch(e){
     statusLeitor.textContent='QR não reconhecido: '+e.message;
     setTimeout(()=>abrirLeitor(),1200);
@@ -213,8 +223,22 @@ const ADMIN_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwuyKzF9x2O1L0gL
 let adminTap=0,adminTimer=null,adminRegistro=null;
 document.getElementById('tituloApp').addEventListener('click',()=>{
  adminTap++;clearTimeout(adminTimer);adminTimer=setTimeout(()=>adminTap=0,500);
- if(adminTap>=2){adminTap=0;const p=prompt('Modo administrativo\n\nPIN:');if(p==='2580'){adminBox.style.display='block';adminBox.scrollIntoView({behavior:'smooth'})}else if(p!==null)alert('PIN incorreto.')}
+ if(adminTap>=2){adminTap=0;abrirPinAdmin();}
 });
+function abrirPinAdmin(){
+ adminPinInput.value='';adminPinStatus.style.display='none';
+ adminPinModal.style.display='flex';
+ setTimeout(()=>adminPinInput.focus(),100);
+}
+function fecharPinAdmin(){adminPinModal.style.display='none';adminPinInput.value=''}
+function confirmarPinAdmin(){
+ if(adminPinInput.value==='2580'){
+   fecharPinAdmin();adminBox.style.display='block';adminBox.scrollIntoView({behavior:'smooth'});
+ }else{
+   adminPinStatus.textContent='PIN incorreto.';adminPinStatus.style.display='block';adminPinInput.select();
+ }
+}
+document.getElementById('adminPinInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarPinAdmin();});
 function fecharAdmin(){adminBox.style.display='none';adminResultado.innerHTML='';adminRegistro=null}
 async function buscarAdmin(){
  const opv=adminOP.value.trim(),itv=adminItem.value.trim(),mqv=adminMaq.value.trim();
