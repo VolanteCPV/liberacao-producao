@@ -9,6 +9,27 @@
 
 <style>
 body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
+
+.report{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}
+.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.kpi{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;text-align:center}
+.kpi strong{display:block;font-size:24px}.kpi span{font-size:12px;color:#a8b3c2}
+.chart-card{background:#fff;color:#111;border-radius:12px;padding:12px;margin-top:12px}
+.chart-card h3{margin:0 0 10px;font-size:17px}
+.chart-wrap{position:relative;min-height:260px}
+.rank{margin:0;padding-left:24px}.rank li{padding:5px 0;border-bottom:1px solid #e5e7eb}
+.report-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.report-actions button{margin-top:10px}
+@media print{
+ body{background:#fff;color:#000;padding:0}
+ .card>h1,.card>.sub,.card>form,.card>#resultado,.card>.green,.card>.gray,.scanner,.consulta,#adminBox{display:none!important}
+ .card{max-width:none;border:0;background:#fff;padding:0}
+ #relatorio{display:block!important;border:0;margin:0;padding:0;color:#000}
+ #relatorio .sub,#relatorio .meta{color:#444}
+ #relatorio button,#statusRelatorio{display:none!important}
+ .chart-card,.kpi{break-inside:avoid;border:1px solid #bbb}
+ .report-grid{grid-template-columns:repeat(4,1fr)}
+}
 </style></head><body><div class="card">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
@@ -30,6 +51,43 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <button type="button" onclick="consultarProducao()">PESQUISAR</button>
 <button class="gray" type="button" onclick="limparConsulta()">LIMPAR PESQUISA</button>
 <div class="status" id="statusConsulta">Informe um ou mais filtros e toque em PESQUISAR.</div><div id="listaConsulta"></div></div>
+<button class="gray" type="button" onclick="abrirRelatorio()">📊 RELATÓRIO / PAINEL</button>
+<div class="report" id="relatorio">
+  <h2>Relatório de Produção</h2>
+  <div class="sub">Resumo por período usando a data corrigida quando existir.</div>
+  <label>Período</label>
+  <select id="periodoRel" onchange="ajustarPeriodoRel()">
+    <option value="semana">Esta semana</option>
+    <option value="semanaAnterior">Semana anterior</option>
+    <option value="mes">Este mês</option>
+    <option value="mesAnterior">Mês anterior</option>
+    <option value="personalizado">Personalizado</option>
+  </select>
+  <div id="datasRel" style="display:none">
+    <label>De</label><input id="relInicio" type="date">
+    <label>Até</label><input id="relFim" type="date">
+  </div>
+  <button type="button" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
+  <div class="status" id="statusRelatorio">Selecione o período e toque em GERAR RELATÓRIO.</div>
+  <div id="conteudoRelatorio" style="display:none">
+    <div class="meta" id="periodoTexto"></div>
+    <div class="report-grid">
+      <div class="kpi"><strong id="kTotal">0</strong><span>Total de registros</span></div>
+      <div class="kpi"><strong id="kVoleios">0</strong><span>Voleios</span></div>
+      <div class="kpi"><strong id="kOK">0</strong><span>Peças OK</span></div>
+      <div class="kpi"><strong id="kNOK">0</strong><span>Peças NOK</span></div>
+    </div>
+    <div class="chart-card"><h3>Voleios por volante</h3><div class="chart-wrap"><canvas id="grafVolantes"></canvas></div></div>
+    <div class="chart-card"><h3>Registros por setor</h3><div class="chart-wrap"><canvas id="grafSetores"></canvas></div></div>
+    <div class="chart-card"><h3>Tipos de atividade</h3><div class="chart-wrap"><canvas id="grafTipos"></canvas></div></div>
+    <div class="chart-card"><h3>Top 10 situações / defeitos</h3><div class="chart-wrap"><canvas id="grafDefeitos"></canvas></div><ol class="rank" id="rankDefeitos"></ol></div>
+    <div class="report-actions">
+      <button class="green" type="button" onclick="window.print()">🖨️ IMPRIMIR / PDF</button>
+      <button class="gray" type="button" onclick="compartilharRelatorio()">📤 COMPARTILHAR</button>
+    </div>
+  </div>
+  <button class="gray" type="button" onclick="fecharRelatorio()">FECHAR RELATÓRIO</button>
+</div>
 </div>
 <div id="adminBox" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px">
 <h2>Correção administrativa</h2><div class="sub">Área experimental — o horário original é preservado.</div>
@@ -43,6 +101,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","444","402"],"LSR":["253","252","185"]};
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
@@ -196,4 +255,100 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function iso(v){let m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:''}
 async function consultarProducao(){statusConsulta.textContent='Consultando planilha...';listaConsulta.innerHTML='';try{let x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Não foi possível acessar a planilha.');let a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));let h=a.shift();let D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),S=col(h,['Setor']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Observações','Observacao']);let v=(r,i)=>i>=0?(r[i]??''):'';let dataEfetiva=r=>String(v(r,DC)).trim()||v(r,D);let z=a.filter(r=>(!qop.value||norm(v(r,O)).includes(norm(qop.value)))&&(!qitem.value||norm(v(r,I)).includes(norm(qitem.value)))&&(!qmaq.value||norm(v(r,M)).includes(norm(qmaq.value)))&&(!qdata.value||iso(dataEfetiva(r))===qdata.value)).reverse();statusConsulta.textContent=z.length?z.length+' registro(s) encontrado(s).':'Nenhum registro encontrado.';listaConsulta.innerHTML=z.slice(0,100).map(r=>`<div class="result-card"><strong>OP ${esc(v(r,O)||'-')}</strong> • Item ${esc(v(r,I)||'-')} • Máquina ${esc(v(r,M)||'-')}<div class="meta">${esc(dataEfetiva(r))}${v(r,DC)?' <strong>(corrigida)</strong>':''}${v(r,S)?' • '+esc(v(r,S)):''}</div>${v(r,T)?'<div><strong>Tipo:</strong> '+esc(v(r,T))+'</div>':''}${v(r,V)?'<div><strong>Volante:</strong> '+esc(v(r,V))+'</div>':''}${v(r,SI)?'<div><strong>Situação:</strong> '+esc(v(r,SI))+'</div>':''}${v(r,OB)?'<div><strong>Observações:</strong> '+esc(v(r,OB))+'</div>':''}</div>`).join('')}catch(e){statusConsulta.textContent='Erro na consulta: '+e.message}}
 function limparConsulta(){qop.value='';qitem.value='';qmaq.value='';qdata.value='';listaConsulta.innerHTML='';statusConsulta.textContent='Informe um ou mais filtros e toque em PESQUISAR.'}
+
+let chartsRel={};
+
+function abrirRelatorio(){
+  relatorio.style.display=relatorio.style.display==='block'?'none':'block';
+  if(relatorio.style.display==='block'){ajustarPeriodoRel();relatorio.scrollIntoView({behavior:'smooth'});}
+}
+function fecharRelatorio(){relatorio.style.display='none'}
+function ajustarPeriodoRel(){datasRel.style.display=periodoRel.value==='personalizado'?'block':'none'}
+
+function dataBRParaDate(s){
+  const m=String(s||'').match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(!m)return null;
+  return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+}
+function inicioDia(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,0,0,0)}
+function fimDia(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999)}
+function addDias(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function faixaRelatorio(){
+  const hoje=inicioDia(new Date()), p=periodoRel.value; let ini,fim;
+  if(p==='semana'||p==='semanaAnterior'){
+    const dow=(hoje.getDay()+6)%7; ini=addDias(hoje,-dow);
+    if(p==='semanaAnterior')ini=addDias(ini,-7);
+    fim=fimDia(addDias(ini,6));
+  }else if(p==='mes'||p==='mesAnterior'){
+    let y=hoje.getFullYear(),m=hoje.getMonth()+(p==='mesAnterior'?-1:0);
+    ini=new Date(y,m,1);fim=fimDia(new Date(y,m+1,0));
+  }else{
+    if(!relInicio.value||!relFim.value)throw Error('Informe as datas inicial e final.');
+    ini=inicioDia(new Date(relInicio.value+'T00:00:00'));fim=fimDia(new Date(relFim.value+'T00:00:00'));
+  }
+  return {ini,fim};
+}
+function fmtData(d){return d.toLocaleDateString('pt-BR')}
+function contar(arr){const o={};arr.filter(Boolean).forEach(x=>o[x]=(o[x]||0)+1);return o}
+function ordenar(o){return Object.entries(o).sort((a,b)=>b[1]-a[1])}
+function destruirChart(id){if(chartsRel[id]){chartsRel[id].destroy();delete chartsRel[id]}}
+function criarChart(id,type,labels,data,label){
+  destruirChart(id);
+  const ctx=document.getElementById(id);
+  chartsRel[id]=new Chart(ctx,{type,data:{labels,datasets:[{label,data}]},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:type==='pie',position:'bottom'},tooltip:{callbacks:{
+      label:c=>{const total=c.dataset.data.reduce((a,b)=>a+b,0);const pct=total?((c.raw/total)*100).toFixed(1):0;return type==='pie'?`${c.label}: ${c.raw} (${pct}%)`:`${c.raw}`;}
+    }}},
+    scales:type==='pie'?{}:{y:{beginAtZero:true,ticks:{precision:0}}}
+  }});
+}
+async function gerarRelatorio(){
+  statusRelatorio.textContent='Montando relatório...';conteudoRelatorio.style.display='none';
+  try{
+    if(!window.Chart)throw Error('Biblioteca de gráficos não carregou.');
+    const {ini,fim}=faixaRelatorio();
+    const resp=await fetch(CSV_URL,{cache:'no-store'});if(!resp.ok)throw Error('Não foi possível acessar a planilha.');
+    let a=parseCSV(await resp.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
+    const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),S=col(h,['Setor']),
+          T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),
+          SI=col(h,['Situação encontrada','Situação']);
+    const val=(r,i)=>i>=0?(r[i]??''):'';
+    const dados=a.map(r=>({r,data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D))}))
+                 .filter(x=>x.data&&x.data>=ini&&x.data<=fim);
+    const rows=dados.map(x=>x.r);
+    const tipos=rows.map(r=>String(val(r,T)).trim()), voleios=rows.filter(r=>norm(val(r,T))==='voleio');
+    const sit=rows.map(r=>String(val(r,SI)).trim());
+    kTotal.textContent=rows.length;kVoleios.textContent=voleios.length;
+    kOK.textContent=sit.filter(x=>norm(x).includes('pecas ok')).length;
+    kNOK.textContent=sit.filter(x=>norm(x).includes('pecas nok')).length;
+    periodoTexto.textContent=`Período: ${fmtData(ini)} a ${fmtData(fim)}`;
+
+    let z=ordenar(contar(voleios.map(r=>String(val(r,V)).trim())));
+    criarChart('grafVolantes','pie',z.map(x=>x[0]),z.map(x=>x[1]),'Voleios');
+
+    z=ordenar(contar(rows.map(r=>String(val(r,S)).trim())));
+    criarChart('grafSetores','pie',z.map(x=>x[0]),z.map(x=>x[1]),'Registros');
+
+    z=ordenar(contar(tipos));
+    criarChart('grafTipos','bar',z.map(x=>x[0]),z.map(x=>x[1]),'Registros');
+
+    const defeitos=[];
+    sit.forEach(s=>s.split(',').map(x=>x.trim()).filter(Boolean).forEach(x=>defeitos.push(x)));
+    z=ordenar(contar(defeitos)).slice(0,10);
+    criarChart('grafDefeitos','bar',z.map(x=>x[0]),z.map(x=>x[1]),'Ocorrências');
+    rankDefeitos.innerHTML=z.map(([n,q])=>`<li><strong>${esc(n)}</strong> — ${q}</li>`).join('');
+
+    conteudoRelatorio.style.display='block';
+    statusRelatorio.textContent=rows.length?`${rows.length} registro(s) no período.`:'Nenhum registro no período.';
+  }catch(e){statusRelatorio.textContent='Erro no relatório: '+e.message}
+}
+async function compartilharRelatorio(){
+  const texto=`Relatório de Produção\n${periodoTexto.textContent}\nTotal: ${kTotal.textContent}\nVoleios: ${kVoleios.textContent}\nPeças OK: ${kOK.textContent}\nPeças NOK: ${kNOK.textContent}`;
+  try{
+    if(navigator.share)await navigator.share({title:'Relatório de Produção',text:texto});
+    else{await navigator.clipboard.writeText(texto);alert('Resumo copiado.');}
+  }catch(e){}
+}
+
 </script></body></html>
