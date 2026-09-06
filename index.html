@@ -58,6 +58,10 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .situacoes{display:grid;gap:8px;margin-top:8px}.situacao{display:flex;align-items:center;gap:10px;background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;font-weight:700}.situacao input{width:22px;height:22px;margin:0}
 #inspInfo{min-height:80px;width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:16px;background:#0f141b;color:#f8fafc;resize:vertical}
 .envio-ok{text-align:center;font-size:20px;font-weight:700;padding:20px}
+
+.alerta-reincidencia{display:none;margin:14px 0;padding:14px;border:2px solid #dc2626;border-radius:14px;background:#fee2e2;color:#7f1d1d}
+.alerta-reincidencia strong{display:block;font-size:19px;margin-bottom:6px}
+.alerta-reincidencia .small{color:#7f1d1d;line-height:1.45}
 </style></head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
@@ -78,6 +82,10 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
     <div class="qr-dado"><span>OP</span><strong id="inspOP">-</strong></div>
     <div class="qr-dado"><span>Item</span><strong id="inspItem">-</strong></div>
     <div class="qr-dado"><span>Setor</span><strong id="inspSetor">-</strong></div>
+  </div>
+  <div class="alerta-reincidencia" id="alertaReincidencia">
+    <strong>🚨 ATENÇÃO — PROBLEMA REINCIDENTE</strong>
+    <div class="small" id="alertaReincidenciaTexto"></div>
   </div>
   <label>Volante responsável *</label>
   <div class="opcoes" id="opcoesVolante"></div>
@@ -361,12 +369,64 @@ function montarOpcoesInspecao(){
 function marcarBotao(container,valor){[...container.querySelectorAll('.opcao')].forEach(b=>b.classList.toggle('ativa',b.dataset.v===valor));}
 function selecionarVolante(v){inspVolante=v;localStorage.setItem('ultimoVolante',v);marcarBotao(opcoesVolante,v)}
 function selecionarTipo(v){inspTipo=v;marcarBotao(opcoesTipo,v)}
-function abrirInspecao(d){
+async function verificarReincidenciaItem(d){
+  alertaReincidencia.style.display='none';
+  alertaReincidenciaTexto.textContent='';
+  try{
+    const x=await fetch(CSV_URL,{cache:'no-store'});
+    if(!x.ok)return;
+    const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));
+    const h=a.shift();
+    const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),
+          I=col(h,['Item']),M=col(h,['Máquina','Maquina']),
+          V=col(h,['Volante responsável','Responsável']),
+          SI=col(h,['Situação encontrada','Situação']);
+    const val=(r,i)=>i>=0?(r[i]??''):'';
+    const dataEfetiva=r=>String(val(r,DC)).trim()||val(r,D);
+    const canon=new Map(PROBLEMAS.map(p=>[norm(p),p]));
+    const registros=a.filter(r=>norm(val(r,I))===norm(d.item)).map((r,idx)=>{
+      const raw=String(val(r,SI)||'');
+      const partes=raw.split(/[|,]/).map(s=>s.trim()).filter(Boolean);
+      const probs=partes.map(s=>canon.get(norm(s))).filter(Boolean);
+      const ok=partes.some(s=>norm(s)==='pecas ok');
+      // Compatibilidade com registros antigos: qualquer situação não-OK também conta
+      // para não perder o histórico entre turnos.
+      const problematico=!ok && (probs.length>0 || partes.length>0);
+      return {idx,data:dataEfetiva(r),maquina:val(r,M),volante:val(r,V),raw,probs,ok,problematico};
+    });
+    // A planilha é cronológica; percorremos do registro mais recente para trás.
+    registros.reverse();
+    let seq=[];
+    for(const r of registros){
+      if(r.ok)break;
+      if(r.problematico)seq.push(r);
+      else break;
+    }
+    if(seq.length<2)return;
+    const nomes=[];
+    seq.forEach(r=>{
+      const ps=r.probs.length?r.probs:r.raw.split(/[|,]/).map(s=>s.trim()).filter(Boolean);
+      ps.forEach(p=>{if(p && !nomes.some(n=>norm(n)===norm(p)))nomes.push(p)});
+    });
+    const ult=seq[0];
+    alertaReincidenciaTexto.innerHTML=
+      `<b>Item ${esc(d.item)}</b> possui <b>${seq.length} inspeções consecutivas com problema</b>.<br>`+
+      `Problema(s): <b>${esc(nomes.join(', ')||'Situação NOK')}</b>.<br>`+
+      `Último registro: ${esc(ult.data||'-')} • Máquina ${esc(ult.maquina||'-')} • Volante ${esc(ult.volante||'-')}.`;
+    alertaReincidencia.style.display='block';
+    if(navigator.vibrate)navigator.vibrate([180,100,180]);
+  }catch(e){
+    console.warn('Não foi possível verificar reincidência:',e);
+  }
+}
+async function abrirInspecao(d){
   inspDados=d;inspMaq.textContent=d.maquina;inspOP.textContent=d.op;inspItem.textContent=d.item;inspSetor.textContent=d.setor||'-';
   montarOpcoesInspecao();inspVolante=localStorage.getItem('ultimoVolante')||'';inspTipo='';
   if(VOLANTES.includes(inspVolante))marcarBotao(opcoesVolante,inspVolante);else inspVolante='';
   inspInfo.value='';statusInspecao.textContent='Preencha os campos obrigatórios.';btnEnviarInspecao.disabled=false;
+  alertaReincidencia.style.display='none';
   inspecao.style.display='block';inspecao.scrollIntoView({behavior:'smooth'});
+  verificarReincidenciaItem(d);
 }
 function cancelarInspecao(){inspecao.style.display='none';inspDados=null;abrirLeitor()}
 async function confirmarRegistroInspecao(d,limiteMs=12000){
