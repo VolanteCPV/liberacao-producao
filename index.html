@@ -35,7 +35,11 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .admin-modal{width:min(420px,100%);background:#151b23;border:1px solid #334155;border-radius:16px;padding:20px;box-sizing:border-box}
 .admin-modal h3{margin:0 0 8px}.admin-modal .sub{margin-bottom:12px}
 .admin-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-</style></head><body><div class="card">
+
+.admin-home{display:none;max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241;color:#f8fafc}
+.admin-tools{display:grid;gap:10px;margin:14px 0}
+.admin-section{display:none;margin-top:16px;border-top:1px solid #334155;padding-top:16px}
+</style></head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
@@ -61,11 +65,17 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   </div>
 </div>
 
-<div id="adminBox" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px">
-<h2>Correção administrativa</h2><div class="sub">Área experimental — o horário original é preservado.</div>
-<div class="status">Ferramentas administrativas</div>
-<button class="gray" type="button" onclick="abrirConsulta()">🔎 CONSULTAR PRODUÇÃO</button>
-<div class="consulta" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
+
+
+<div class="admin-home" id="adminHome">
+  <h1>Área administrativa</h1>
+  <div class="sub">Liberação de Produção</div>
+  <div class="admin-tools" id="adminMenu">
+    <button class="gray" type="button" onclick="mostrarFerramentaAdmin('consulta')">🔎 CONSULTA</button>
+    <button class="gray" type="button" onclick="mostrarFerramentaAdmin('relatorio')">📊 RELATÓRIO</button>
+    <button class="orange" type="button" onclick="mostrarFerramentaAdmin('adminBox')">🛠️ CORREÇÃO</button>
+  </div>
+  <div class="admin-section" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
 <label>OP</label><input id="qop" inputmode="numeric" placeholder="Ex.: 577110">
 <label>Item</label><input id="qitem" inputmode="numeric" placeholder="Ex.: 869">
 <label>Máquina</label><input id="qmaq" inputmode="numeric" placeholder="Ex.: 196">
@@ -73,8 +83,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <button type="button" onclick="consultarProducao()">PESQUISAR</button>
 <button class="gray" type="button" onclick="limparConsulta()">LIMPAR PESQUISA</button>
 <div class="status" id="statusConsulta">Informe um ou mais filtros e toque em PESQUISAR.</div><div id="listaConsulta"></div></div>
-<button class="gray" type="button" onclick="abrirRelatorio()">📊 RELATÓRIO / PAINEL</button>
-<div class="report" id="relatorio">
+  <div class="admin-section" id="relatorio">
   <h2>Relatório de Produção</h2>
   <div class="sub">Resumo por período usando a data corrigida quando existir.</div>
   <label>Período</label>
@@ -110,13 +119,18 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   </div>
   <button class="gray" type="button" onclick="fecharRelatorio()">FECHAR RELATÓRIO</button>
 </div>
+  <div class="admin-section" id="adminBox">
+<h2>Correção administrativa</h2><div class="sub">O horário original é preservado.</div>
 <label>OP</label><input id="adminOP" inputmode="numeric">
 <label>Item</label><input id="adminItem" inputmode="numeric">
 <label>Máquina</label><input id="adminMaq" inputmode="numeric">
 <button type="button" onclick="buscarAdmin()">LOCALIZAR REGISTRO</button>
 <div id="adminResultado"></div>
-<button class="gray" type="button" onclick="fecharAdmin()">FECHAR MODO ADMIN</button>
+<button class="gray" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
 </div>
+  <button class="gray" id="btnSairAdmin" type="button" onclick="sairAdmin()">SAIR DA ÁREA ADMINISTRATIVA</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -233,13 +247,13 @@ function abrirPinAdmin(){
 function fecharPinAdmin(){adminPinModal.style.display='none';adminPinInput.value=''}
 function confirmarPinAdmin(){
  if(adminPinInput.value==='2580'){
-   fecharPinAdmin();adminBox.style.display='block';adminBox.scrollIntoView({behavior:'smooth'});
+   fecharPinAdmin();entrarAdmin();
  }else{
    adminPinStatus.textContent='PIN incorreto.';adminPinStatus.style.display='block';adminPinInput.select();
  }
 }
 document.getElementById('adminPinInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarPinAdmin();});
-function fecharAdmin(){adminBox.style.display='none';adminResultado.innerHTML='';adminRegistro=null}
+function fecharAdmin(){voltarMenuAdmin()}
 async function buscarAdmin(){
  const opv=adminOP.value.trim(),itv=adminItem.value.trim(),mqv=adminMaq.value.trim();
  if(!opv&&!itv&&!mqv){adminResultado.innerHTML='<div class="status">Informe OP, Item ou Máquina.</div>';return}
@@ -373,6 +387,32 @@ async function compartilharRelatorio(){
     if(navigator.share)await navigator.share({title:'Relatório de Produção',text:texto});
     else{await navigator.clipboard.writeText(texto);alert('Resumo copiado.');}
   }catch(e){}
+}
+
+
+function entrarAdmin(){
+  areaComum.style.display='none';
+  adminHome.style.display='block';
+  adminMenu.style.display='grid';
+  ['consulta','relatorio','adminBox'].forEach(id=>document.getElementById(id).style.display='none');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function mostrarFerramentaAdmin(id){
+  adminMenu.style.display='none';
+  ['consulta','relatorio','adminBox'].forEach(x=>document.getElementById(x).style.display=x===id?'block':'none');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function voltarMenuAdmin(){
+  ['consulta','relatorio','adminBox'].forEach(id=>document.getElementById(id).style.display='none');
+  adminMenu.style.display='grid';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function sairAdmin(){
+  ['consulta','relatorio','adminBox'].forEach(id=>document.getElementById(id).style.display='none');
+  adminHome.style.display='none';
+  areaComum.style.display='block';
+  adminResultado.innerHTML='';adminRegistro=null;
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 </script></body></html>
