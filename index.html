@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V14</title>
+<title>Liberação de Produção V15</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -374,7 +374,17 @@ async function enviarInspecao(){
     if(!ok){statusInspecao.textContent='Não consegui confirmar a gravação. Não envie novamente antes de conferir a planilha.';btnEnviarInspecao.disabled=false;return}
     statusInspecao.innerHTML='<div class="envio-ok">✓ Inspeção registrada</div>';
     if(navigator.vibrate)navigator.vibrate([80,50,80]);
-    setTimeout(()=>{inspecao.style.display='none';inspDados=null;window.scrollTo({top:0,behavior:'smooth'});abrirLeitor();},1100);
+    setTimeout(()=>{
+      inspecao.style.display='none';
+      scanner.style.display='none';
+      inspDados=null;
+      inspVolante='';
+      inspTipo='';
+      inspInfo.value='';
+      btnEnviarInspecao.disabled=false;
+      statusInspecao.textContent='Preencha os campos obrigatórios.';
+      window.scrollTo({top:0,behavior:'smooth'});
+    },1100);
   }catch(e){statusInspecao.textContent='Erro ao enviar: '+e.message;btnEnviarInspecao.disabled=false}
 }
 
