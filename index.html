@@ -8,7 +8,7 @@
 <link rel="manifest" href="./manifest.json">
 
 <style>
-body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
+body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}.red{background:#dc2626}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
 
 .report{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}
 .report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
@@ -111,8 +111,8 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <h1>Área administrativa</h1>
   <div class="sub">Liberação de Produção</div>
   <div class="admin-tools" id="adminMenu">
-    <button class="gray" type="button" onclick="mostrarFerramentaAdmin('consulta')">🔎 CONSULTA</button>
-    <button class="gray" type="button" onclick="mostrarFerramentaAdmin('relatorio')">📊 RELATÓRIO</button>
+    <button class="green" type="button" onclick="mostrarFerramentaAdmin('consulta')">🔎 CONSULTA</button>
+    <button type="button" onclick="mostrarFerramentaAdmin('relatorio')">📊 RELATÓRIO</button>
     <button class="orange" type="button" onclick="mostrarFerramentaAdmin('adminBox')">🛠️ CORREÇÃO</button>
   </div>
   <div class="admin-section" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
@@ -170,7 +170,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <div id="adminResultado"></div>
 <button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
 </div>
-  <button class="gray" id="btnSairAdmin" type="button" onclick="sairAdmin()">SAIR DA ÁREA ADMINISTRATIVA</button>
+  <button class="red" id="btnSairAdmin" type="button" onclick="sairAdmin()">SAIR DA ÁREA ADMINISTRATIVA</button>
 </div>
 
 
