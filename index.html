@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção</title>
+<title>Liberação de Produção V14</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -46,6 +46,17 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .app-confirm-msg{white-space:pre-line;line-height:1.6;color:#e5e7eb;font-size:17px;margin-bottom:20px}
 .app-confirm-actions{display:flex;gap:12px;justify-content:flex-end}
 .app-confirm-actions button{width:auto;min-width:115px;margin:0}
+
+.inspecao{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}
+.qr-resumo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 16px}
+.qr-dado{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:10px}
+.qr-dado span{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase}.qr-dado strong{font-size:18px}
+.opcoes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.opcao{margin:0;padding:12px 8px;background:#263241;border:2px solid transparent}.opcao.ativa{background:#166534;border-color:#4ade80}
+.opcoes.tipo{grid-template-columns:repeat(3,1fr)}.opcoes.tipo .opcao{font-size:14px;padding:12px 4px}
+.situacoes{display:grid;gap:8px;margin-top:8px}.situacao{display:flex;align-items:center;gap:10px;background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;font-weight:700}.situacao input{width:22px;height:22px;margin:0}
+#inspInfo{min-height:80px;width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:16px;background:#0f141b;color:#f8fafc;resize:vertical}
+.envio-ok{text-align:center;font-size:20px;font-weight:700;padding:20px}
 </style></head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
@@ -57,6 +68,27 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <div id="reader"></div>
   <div class="status" id="statusLeitor">Câmera aguardando início.</div>
   <button class="gray" type="button" onclick="fecharLeitor()">FECHAR LEITOR</button>
+</div>
+<div class="inspecao" id="inspecao">
+  <h2>Inspeção Volante</h2>
+  <div class="sub">Dados da etiqueta já conferidos pelo QR.</div>
+  <div class="qr-resumo">
+    <div class="qr-dado"><span>Máquina</span><strong id="inspMaq">-</strong></div>
+    <div class="qr-dado"><span>OP</span><strong id="inspOP">-</strong></div>
+    <div class="qr-dado"><span>Item</span><strong id="inspItem">-</strong></div>
+    <div class="qr-dado"><span>Setor</span><strong id="inspSetor">-</strong></div>
+  </div>
+  <label>Volante responsável *</label>
+  <div class="opcoes" id="opcoesVolante"></div>
+  <label>Tipo de inspeção *</label>
+  <div class="opcoes tipo" id="opcoesTipo"></div>
+  <label>Situação encontrada *</label>
+  <div class="situacoes" id="opcoesSituacao"></div>
+  <label>Informações <span class="small">(opcional)</span></label>
+  <textarea id="inspInfo" placeholder="Observações adicionais"></textarea>
+  <button class="green" id="btnEnviarInspecao" type="button" onclick="enviarInspecao()">ENVIAR INSPEÇÃO</button>
+  <button class="gray" type="button" onclick="cancelarInspecao()">CANCELAR / LER OUTRO QR</button>
+  <div class="status" id="statusInspecao">Preencha os campos obrigatórios.</div>
 </div>
 </div>
 <div class="admin-modal-bg" id="adminPinModal">
@@ -280,16 +312,70 @@ async function qrLido(texto){
     const m=u.searchParams.get('entry.510346288')||'';
     const o=u.searchParams.get('entry.982950365')||'';
     const it=u.searchParams.get('entry.1488788372')||'';
-    const s=u.searchParams.get('entry.705084022')||'';
+    const st=u.searchParams.get('entry.705084022')||'';
     if(!it||!o||!m) throw new Error('Este QR não contém dados completos de Liberação de Produção.');
-    statusLeitor.textContent='✓ QR reconhecido — abrindo formulário...';
     if(navigator.vibrate) navigator.vibrate(100);
     scanner.style.display='none';
-    window.location.assign(u.href);
+    abrirInspecao({maquina:m,op:o,item:it,setor:st});
   }catch(e){
     statusLeitor.textContent='QR não reconhecido: '+e.message;
     setTimeout(()=>abrirLeitor(),1200);
   }
+}
+
+const VOLANTES=['Andreia','Alessandra','Danilo','Elaine','Marcelo','Mariana'];
+const TIPOS=['Voleio','Setup','Troca de OP'];
+const SITUACOES=['Peças OK','Falha de material','Rebarbas','Cruas','Fragmentos','Material contaminado'];
+let inspDados=null,inspVolante='',inspTipo='';
+function montarOpcoesInspecao(){
+  opcoesVolante.innerHTML=VOLANTES.map(v=>`<button type="button" class="opcao" data-v="${v}" onclick="selecionarVolante('${v}')">${v}</button>`).join('');
+  opcoesTipo.innerHTML=TIPOS.map(v=>`<button type="button" class="opcao" data-v="${v}" onclick="selecionarTipo('${v}')">${v}</button>`).join('');
+  opcoesSituacao.innerHTML=SITUACOES.map((v,i)=>`<label class="situacao"><input type="checkbox" value="${v}" ${i===0?'':''}> <span>${v}</span></label>`).join('');
+}
+function marcarBotao(container,valor){[...container.querySelectorAll('.opcao')].forEach(b=>b.classList.toggle('ativa',b.dataset.v===valor));}
+function selecionarVolante(v){inspVolante=v;localStorage.setItem('ultimoVolante',v);marcarBotao(opcoesVolante,v)}
+function selecionarTipo(v){inspTipo=v;marcarBotao(opcoesTipo,v)}
+function abrirInspecao(d){
+  inspDados=d;inspMaq.textContent=d.maquina;inspOP.textContent=d.op;inspItem.textContent=d.item;inspSetor.textContent=d.setor||'-';
+  montarOpcoesInspecao();inspVolante=localStorage.getItem('ultimoVolante')||'';inspTipo='';
+  if(VOLANTES.includes(inspVolante))marcarBotao(opcoesVolante,inspVolante);else inspVolante='';
+  inspInfo.value='';statusInspecao.textContent='Preencha os campos obrigatórios.';btnEnviarInspecao.disabled=false;
+  inspecao.style.display='block';inspecao.scrollIntoView({behavior:'smooth'});
+}
+function cancelarInspecao(){inspecao.style.display='none';inspDados=null;abrirLeitor()}
+async function confirmarRegistroInspecao(d,limiteMs=12000){
+  const inicio=Date.now();
+  while(Date.now()-inicio<limiteMs){
+    await new Promise(r=>setTimeout(r,1800));
+    try{
+      const x=await fetch(CSV_URL,{cache:'no-store'}); if(!x.ok)continue;
+      const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim())); const h=a.shift();
+      const M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']);
+      const val=(r,i)=>i>=0?(r[i]??''):'';
+      const achou=a.slice(-20).some(r=>norm(val(r,M))===norm(d.maquina)&&norm(val(r,O))===norm(d.op)&&norm(val(r,I))===norm(d.item)&&norm(val(r,T))===norm(d.tipo)&&norm(val(r,V))===norm(d.volante));
+      if(achou)return true;
+    }catch(e){}
+  }
+  return false;
+}
+async function enviarInspecao(){
+  if(!inspDados)return;
+  const situacoes=[...opcoesSituacao.querySelectorAll('input:checked')].map(x=>x.value);
+  if(!inspVolante){statusInspecao.textContent='Selecione o volante responsável.';return}
+  if(!inspTipo){statusInspecao.textContent='Selecione o tipo de inspeção.';return}
+  if(!situacoes.length){statusInspecao.textContent='Selecione pelo menos uma situação encontrada.';return}
+  const dados={...inspDados,volante:inspVolante,tipo:inspTipo,situacoes:situacoes.join('|'),informacoes:inspInfo.value.trim()};
+  btnEnviarInspecao.disabled=true;statusInspecao.textContent='Enviando inspeção...';
+  try{
+    const b=new URLSearchParams({acao:'inspecao',...dados});
+    await fetch(CONFIG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b.toString()});
+    statusInspecao.textContent='Enviado. Confirmando gravação na planilha...';
+    const ok=await confirmarRegistroInspecao(dados);
+    if(!ok){statusInspecao.textContent='Não consegui confirmar a gravação. Não envie novamente antes de conferir a planilha.';btnEnviarInspecao.disabled=false;return}
+    statusInspecao.innerHTML='<div class="envio-ok">✓ Inspeção registrada</div>';
+    if(navigator.vibrate)navigator.vibrate([80,50,80]);
+    setTimeout(()=>{inspecao.style.display='none';inspDados=null;window.scrollTo({top:0,behavior:'smooth'});abrirLeitor();},1100);
+  }catch(e){statusInspecao.textContent='Erro ao enviar: '+e.message;btnEnviarInspecao.disabled=false}
 }
 
 
