@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V15</title>
+<title>Liberação de Produção V16</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -204,7 +204,8 @@ function confirmarNoApp(msg){
   });
 }
 
-// Lista local de segurança: mantém a produção funcionando se a configuração online não carregar.
+// Listas locais de segurança: mantêm a produção funcionando se a configuração online não carregar.
+let VOLANTES=['Andreia','Alessandra','Danilo','Elaine','Marcelo','Mariana'];
 let MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","776","775","444","402"],"LSR":["253","252","184"]};
 const CONFIG_URL="https://script.google.com/macros/s/AKfycbyLicum6F8vwyUmL97VrLzNEgsc7UZ2bI1Ot_MaGpIzOPkLUnUKzkCLGBCy4eo1sHXd/exec";
 async function carregarConfiguracao(){
@@ -221,6 +222,13 @@ async function carregarConfiguracao(){
       novo[l].push(m);
     });
     if(Object.keys(novo).length) MAQUINAS=novo;
+    if(Array.isArray(j.volantes)&&j.volantes.length){
+      const novosVolantes=[...j.volantes]
+        .sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0))
+        .map(x=>String(x.nome||'').trim())
+        .filter(Boolean);
+      if(novosVolantes.length) VOLANTES=novosVolantes;
+    }
     // Se uma linha já estiver selecionada, atualiza o combo sem exigir recarregar a tela.
     if(linha.value) atualizarMaquinas();
     console.log('Configuração de máquinas carregada da planilha.');
@@ -323,7 +331,6 @@ async function qrLido(texto){
   }
 }
 
-const VOLANTES=['Andreia','Alessandra','Danilo','Elaine','Marcelo','Mariana'];
 const TIPOS=['Voleio','Setup','Troca de OP'];
 const SITUACOES=['Peças OK','Falha de material','Rebarbas','Cruas','Fragmentos','Material contaminado'];
 let inspDados=null,inspVolante='',inspTipo='';
