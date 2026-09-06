@@ -47,6 +47,23 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <div class="status" id="statusLeitor">Câmera aguardando início.</div>
   <button class="gray" type="button" onclick="fecharLeitor()">FECHAR LEITOR</button>
 </div>
+</div>
+<div class="admin-modal-bg" id="adminPinModal">
+  <div class="admin-modal">
+    <h3>Modo administrativo</h3>
+    <div class="sub">Digite o PIN para continuar.</div>
+    <input id="adminPinInput" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
+    <div class="admin-modal-actions">
+      <button class="gray" type="button" onclick="fecharPinAdmin()">CANCELAR</button>
+      <button type="button" onclick="confirmarPinAdmin()">ENTRAR</button>
+    </div>
+    <div class="status" id="adminPinStatus" style="display:none"></div>
+  </div>
+</div>
+
+<div id="adminBox" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px">
+<h2>Correção administrativa</h2><div class="sub">Área experimental — o horário original é preservado.</div>
+<div class="status">Ferramentas administrativas</div>
 <button class="gray" type="button" onclick="abrirConsulta()">🔎 CONSULTAR PRODUÇÃO</button>
 <div class="consulta" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
 <label>OP</label><input id="qop" inputmode="numeric" placeholder="Ex.: 577110">
@@ -93,23 +110,6 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   </div>
   <button class="gray" type="button" onclick="fecharRelatorio()">FECHAR RELATÓRIO</button>
 </div>
-</div>
-
-<div class="admin-modal-bg" id="adminPinModal">
-  <div class="admin-modal">
-    <h3>Modo administrativo</h3>
-    <div class="sub">Digite o PIN para continuar.</div>
-    <input id="adminPinInput" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
-    <div class="admin-modal-actions">
-      <button class="gray" type="button" onclick="fecharPinAdmin()">CANCELAR</button>
-      <button type="button" onclick="confirmarPinAdmin()">ENTRAR</button>
-    </div>
-    <div class="status" id="adminPinStatus" style="display:none"></div>
-  </div>
-</div>
-
-<div id="adminBox" style="display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px">
-<h2>Correção administrativa</h2><div class="sub">Área experimental — o horário original é preservado.</div>
 <label>OP</label><input id="adminOP" inputmode="numeric">
 <label>Item</label><input id="adminItem" inputmode="numeric">
 <label>Máquina</label><input id="adminMaq" inputmode="numeric">
@@ -122,7 +122,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
-const MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","444","775","776","097","402"],"LSR":["253","252","184"]};
+const MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","776","775","444","402"],"LSR":["253","252","184"]};
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-pqsdMhautyuRJJzc-nu6i6yXS_VG9MreqzE-mVH7SyBu6irihocHeSmUJmWN29IxyDiX4XjhKfX/pub?gid=809263190&single=true&output=csv";
 const MODEL={name_prefixes:["B1"],task:"b1",dpi:203,density:3,label_type:1,speed:1};
