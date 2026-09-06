@@ -152,7 +152,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
     <div class="chart-card"><h3>Voleios por volante</h3><div class="chart-wrap"><canvas id="grafVolantes"></canvas></div></div>
     <div class="chart-card"><h3>Registros por setor</h3><div class="chart-wrap"><canvas id="grafSetores"></canvas></div></div>
     <div class="chart-card"><h3>Tipos de atividade</h3><div class="chart-wrap"><canvas id="grafTipos"></canvas></div></div>
-    <div class="chart-card"><h3>Top 10 situações / defeitos</h3><div class="chart-wrap"><canvas id="grafDefeitos"></canvas></div><ol class="rank" id="rankDefeitos"></ol></div>
+    <div class="chart-card"><h3>Top 10 problemas encontrados</h3><div class="chart-wrap"><canvas id="grafDefeitos"></canvas></div><ol class="rank" id="rankDefeitos"></ol></div>
     <div class="report-actions">
       <button class="green" type="button" onclick="window.print()">🖨️ IMPRIMIR / PDF</button>
       <button class="gray" type="button" onclick="compartilharRelatorio()">📤 COMPARTILHAR</button>
@@ -539,9 +539,14 @@ async function gerarRelatorio(){
     const rows=dados.map(x=>x.r);
     const tipos=rows.map(r=>String(val(r,T)).trim()), voleios=rows.filter(r=>norm(val(r,T))==='voleio');
     const sit=rows.map(r=>String(val(r,SI)).trim());
+    const problemaCanonico=new Map(PROBLEMAS.map(p=>[norm(p),p]));
+    const problemasPorRegistro=sit.map(s=>
+      String(s).split(/[|,]/).map(x=>x.trim()).filter(Boolean)
+        .map(x=>problemaCanonico.get(norm(x))).filter(Boolean)
+    );
     kTotal.textContent=rows.length;kVoleios.textContent=voleios.length;
     kOK.textContent=sit.filter(x=>norm(x).includes('pecas ok')).length;
-    kNOK.textContent=sit.filter(x=>norm(x).includes('pecas nok')).length;
+    kNOK.textContent=problemasPorRegistro.filter(x=>x.length>0).length;
     periodoTexto.textContent=`Período: ${fmtData(ini)} a ${fmtData(fim)}`;
 
     let z=ordenar(contar(voleios.map(r=>String(val(r,V)).trim())));
@@ -553,8 +558,7 @@ async function gerarRelatorio(){
     z=ordenar(contar(tipos));
     criarChart('grafTipos','bar',z.map(x=>x[0]),z.map(x=>x[1]),'Registros');
 
-    const defeitos=[];
-    sit.forEach(s=>s.split(',').map(x=>x.trim()).filter(Boolean).forEach(x=>defeitos.push(x)));
+    const defeitos=problemasPorRegistro.flat();
     z=ordenar(contar(defeitos)).slice(0,10);
     criarChart('grafDefeitos','bar',z.map(x=>x[0]),z.map(x=>x[1]),'Ocorrências');
     rankDefeitos.innerHTML=z.map(([n,q])=>`<li><strong>${esc(n)}</strong> — ${q}</li>`).join('');
