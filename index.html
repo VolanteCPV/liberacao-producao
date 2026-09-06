@@ -39,6 +39,13 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .admin-home{display:none;max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241;color:#f8fafc}
 .admin-tools{display:grid;gap:10px;margin:14px 0}
 .admin-section{display:none;margin-top:16px;border-top:1px solid #334155;padding-top:16px}
+
+.app-confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:10000;align-items:center;justify-content:center;padding:18px}
+.app-confirm{width:min(92vw,450px);background:#171c24;border:1px solid #334155;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.app-confirm h2{margin:0 0 18px;font-size:21px;color:#f8fafc}
+.app-confirm-msg{white-space:pre-line;line-height:1.6;color:#e5e7eb;font-size:17px;margin-bottom:20px}
+.app-confirm-actions{display:flex;gap:12px;justify-content:flex-end}
+.app-confirm-actions button{width:auto;min-width:115px;margin:0}
 </style></head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
@@ -76,6 +83,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
     <button class="orange" type="button" onclick="mostrarFerramentaAdmin('adminBox')">🛠️ CORREÇÃO</button>
   </div>
   <div class="admin-section" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
+<button class="gray" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
 <label>OP</label><input id="qop" inputmode="numeric" placeholder="Ex.: 577110">
 <label>Item</label><input id="qitem" inputmode="numeric" placeholder="Ex.: 869">
 <label>Máquina</label><input id="qmaq" inputmode="numeric" placeholder="Ex.: 196">
@@ -86,6 +94,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <div class="admin-section" id="relatorio">
   <h2>Relatório de Produção</h2>
   <div class="sub">Resumo por período usando a data corrigida quando existir.</div>
+  <button class="gray" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
   <label>Período</label>
   <select id="periodoRel" onchange="ajustarPeriodoRel()">
     <option value="semana">Esta semana</option>
@@ -131,11 +140,38 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <button class="gray" id="btnSairAdmin" type="button" onclick="sairAdmin()">SAIR DA ÁREA ADMINISTRATIVA</button>
 </div>
 
+
+<div class="app-confirm-bg" id="confirmBg">
+  <div class="app-confirm" role="dialog" aria-modal="true">
+    <h2>CONFIRMAR DADOS</h2>
+    <div class="app-confirm-msg" id="confirmMsg"></div>
+    <div class="app-confirm-actions">
+      <button class="gray" type="button" id="confirmCancelar">CANCELAR</button>
+      <button type="button" id="confirmOk">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
+function confirmarNoApp(msg){
+  return new Promise(resolve=>{
+    confirmMsg.textContent=msg;
+    confirmBg.style.display='flex';
+    const fechar=(valor)=>{
+      confirmBg.style.display='none';
+      confirmOk.onclick=null;
+      confirmCancelar.onclick=null;
+      resolve(valor);
+    };
+    confirmOk.onclick=()=>fechar(true);
+    confirmCancelar.onclick=()=>fechar(false);
+  });
+}
+
 const MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","776","775","444","402"],"LSR":["253","252","184"]};
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-pqsdMhautyuRJJzc-nu6i6yXS_VG9MreqzE-mVH7SyBu6irihocHeSmUJmWN29IxyDiX4XjhKfX/pub?gid=809263190&single=true&output=csv";
@@ -145,7 +181,7 @@ let conectado=false, etiquetaURL="";
 function atualizarMaquinas(){const l=linha.value,s=maquina;s.innerHTML="";if(!l){s.disabled=true;s.innerHTML='<option value="">Primeiro selecione a linha</option>';return}s.disabled=false;s.innerHTML='<option value="">Selecione a máquina</option>';MAQUINAS[l].forEach(m=>s.add(new Option(m,m)))}
 function setStatus(t){document.getElementById('status').textContent=t}
 async function conectarB1(){try{if(!window.Niimbot||!Niimbot.isSupported())throw new Error('Web Bluetooth não disponível. Abra pelo Chrome em uma página HTTPS.');setStatus('Procurando B1...');const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('A impressora encontrada não foi identificada como B1 (id 4096).');conectado=true;setStatus('✓ B1 conectada — id '+p.modelId+' • protocolo '+(p.protocolVersion??'detectado'));}catch(e){conectado=false;setStatus('Erro: '+e.message)}}
-function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!confirm('CONFIRMAR DADOS\n\nOP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
+async function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!await confirmarNoApp('OP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
 function desenharEtiqueta(url,o,it,m){
  const c=preview,x=c.getContext('2d');
  x.imageSmoothingEnabled=false;
