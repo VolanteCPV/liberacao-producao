@@ -39,6 +39,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .admin-home{display:none;max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241;color:#f8fafc}
 .admin-tools{display:grid;gap:10px;margin:14px 0}
 .admin-section{display:none;margin-top:16px;border-top:1px solid #334155;padding-top:16px}
+.admin-back{background:#475569;color:#f8fafc;border:1px solid #64748b;margin-top:18px}
 
 .app-confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:10000;align-items:center;justify-content:center;padding:18px}
 .app-confirm{width:min(92vw,450px);background:#171c24;border:1px solid #334155;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
@@ -115,18 +116,17 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
     <button class="orange" type="button" onclick="mostrarFerramentaAdmin('adminBox')">🛠️ CORREÇÃO</button>
   </div>
   <div class="admin-section" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
-<button class="gray" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
 <label>OP</label><input id="qop" inputmode="numeric" placeholder="Ex.: 577110">
 <label>Item</label><input id="qitem" inputmode="numeric" placeholder="Ex.: 869">
 <label>Máquina</label><input id="qmaq" inputmode="numeric" placeholder="Ex.: 196">
 <label>Data</label><input id="qdata" type="date">
 <button type="button" onclick="consultarProducao()">PESQUISAR</button>
 <button class="gray" type="button" onclick="limparConsulta()">LIMPAR PESQUISA</button>
-<div class="status" id="statusConsulta">Informe um ou mais filtros e toque em PESQUISAR.</div><div id="listaConsulta"></div></div>
+<div class="status" id="statusConsulta">Informe um ou mais filtros e toque em PESQUISAR.</div><div id="listaConsulta"></div>
+<button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button></div>
   <div class="admin-section" id="relatorio">
   <h2>Relatório de Produção</h2>
   <div class="sub">Resumo por período usando a data corrigida quando existir.</div>
-  <button class="gray" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
   <label>Período</label>
   <select id="periodoRel" onchange="ajustarPeriodoRel()">
     <option value="semana">Esta semana</option>
@@ -159,6 +159,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
     </div>
   </div>
   <button class="gray" type="button" onclick="fecharRelatorio()">FECHAR RELATÓRIO</button>
+  <button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
 </div>
   <div class="admin-section" id="adminBox">
 <h2>Correção administrativa</h2><div class="sub">O horário original é preservado.</div>
@@ -167,7 +168,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <label>Máquina</label><input id="adminMaq" inputmode="numeric">
 <button type="button" onclick="buscarAdmin()">LOCALIZAR REGISTRO</button>
 <div id="adminResultado"></div>
-<button class="gray" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
+<button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
 </div>
   <button class="gray" id="btnSairAdmin" type="button" onclick="sairAdmin()">SAIR DA ÁREA ADMINISTRATIVA</button>
 </div>
