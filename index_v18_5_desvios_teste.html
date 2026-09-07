@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liberação de Produção V17</title>
+<link rel="icon" type="image/png" href="ícone.png">
+<link rel="apple-touch-icon" href="ícone.png">
+<link rel="manifest" href="./manifest.json">
+
+<style>
+body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color:#f8fafc}.card{max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241}h1{font-size:24px;margin:0 0 5px}.sub{color:#a8b3c2;margin-bottom:16px}.status{padding:11px;border-radius:9px;background:#0f141b;border:1px solid #334155;margin:12px 0;font-size:14px}label{font-weight:700;display:block;margin-top:12px}input,select{width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:17px;background:#0f141b;color:#f8fafc}button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;color:#fff;font-size:16px;font-weight:700;background:#2563eb}.green{background:#15803d}.gray{background:#475569}.orange{background:#c2410c}.red{background:#dc2626}button:disabled{opacity:.45}#resultado{display:none;margin-top:20px;text-align:center;border-top:1px solid #334155;padding-top:18px}.consulta{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}.result-card{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:10px;text-align:left}.meta{color:#a8b3c2;font-size:13px;margin:5px 0}.scanner{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}#reader{width:100%;overflow:hidden;border-radius:10px;margin-top:12px;background:#0f141b}#preview{width:100%;max-width:384px;background:#fff;border-radius:6px;image-rendering:auto}.small{font-size:12px;color:#94a3b8;margin-top:10px;word-break:break-all}
+
+.report{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}
+.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.kpi{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;text-align:center}
+.kpi strong{display:block;font-size:24px}.kpi span{font-size:12px;color:#a8b3c2}
+.chart-card{background:#fff;color:#111;border-radius:12px;padding:12px;margin-top:12px}
+.chart-card h3{margin:0 0 10px;font-size:17px}
+.chart-wrap{position:relative;min-height:260px}
+.rank{margin:0;padding-left:24px}.rank li{padding:5px 0;border-bottom:1px solid #e5e7eb}
+.report-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.report-actions button{margin-top:10px}
+@media print{
+ body{background:#fff;color:#000;padding:0}
+ .card>h1,.card>.sub,.card>form,.card>#resultado,.card>.green,.card>.gray,.scanner,.consulta,#adminBox{display:none!important}
+ .card{max-width:none;border:0;background:#fff;padding:0}
+ #relatorio{display:block!important;border:0;margin:0;padding:0;color:#000}
+ #relatorio .sub,#relatorio .meta{color:#444}
+ #relatorio button,#statusRelatorio{display:none!important}
+ .chart-card,.kpi{break-inside:avoid;border:1px solid #bbb}
+ .report-grid{grid-template-columns:repeat(4,1fr)}
+}
+
+.admin-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;align-items:center;justify-content:center;padding:20px}
+.admin-modal{width:min(420px,100%);background:#151b23;border:1px solid #334155;border-radius:16px;padding:20px;box-sizing:border-box}
+.admin-modal h3{margin:0 0 8px}.admin-modal .sub{margin-bottom:12px}
+.admin-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.admin-home{display:none;max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241;color:#f8fafc}
+.admin-tools{display:grid;gap:10px;margin:14px 0}
+.admin-section{display:none;margin-top:16px;border-top:1px solid #334155;padding-top:16px}
+.admin-back{background:#475569;color:#f8fafc;border:1px solid #64748b;margin-top:18px}
+
+.app-confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);z-index:10000;align-items:center;justify-content:center;padding:18px}
+.app-confirm{width:min(92vw,450px);background:#171c24;border:1px solid #334155;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.app-confirm h2{margin:0 0 18px;font-size:21px;color:#f8fafc}
+.app-confirm-msg{white-space:pre-line;line-height:1.6;color:#e5e7eb;font-size:17px;margin-bottom:20px}
+.app-confirm-actions{display:flex;gap:12px;justify-content:flex-end}
+.app-confirm-actions button{width:auto;min-width:115px;margin:0}
+
+.inspecao{display:none;margin-top:20px;border-top:1px solid #334155;padding-top:18px}
+.qr-resumo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 16px}
+.qr-dado{background:#0f141b;border:1px solid #334155;border-radius:10px;padding:10px}
+.qr-dado span{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase}.qr-dado strong{font-size:18px}
+.opcoes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.opcao{margin:0;padding:12px 8px;background:#263241;border:2px solid transparent}.opcao.ativa{background:#166534;border-color:#4ade80}
+.opcoes.tipo{grid-template-columns:repeat(3,1fr)}
+.opcoes.tipo .opcao{font-size:14px;padding:12px 4px;background:#5b4a22;border-color:#8b7436;color:#fff7d6}
+.opcoes.tipo .opcao.ativa{background:#166534;border-color:#4ade80;color:#fff}
+.situacoes{display:grid;gap:8px;margin-top:8px}.situacao{display:flex;align-items:center;gap:10px;background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;font-weight:700}.situacao input{width:22px;height:22px;margin:0}
+#inspInfo{min-height:80px;width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:16px;background:#0f141b;color:#f8fafc;resize:vertical}
+.envio-ok{text-align:center;font-size:20px;font-weight:700;padding:20px}
+
+.alerta-reincidencia{display:none;margin:14px 0;padding:14px;border:2px solid #dc2626;border-radius:14px;background:#fee2e2;color:#7f1d1d}
+.alerta-reincidencia strong{display:block;font-size:19px;margin-bottom:6px}
+.alerta-reincidencia .small{color:#7f1d1d;line-height:1.45}
+
+.alerta-desvio{display:none;margin:14px 0;padding:14px;border:2px solid #16a34a;border-radius:14px;background:#dcfce7;color:#14532d}
+.alerta-desvio.amarelo{border-color:#ca8a04;background:#fef9c3;color:#713f12}
+.alerta-desvio.vermelho{border-color:#dc2626;background:#fee2e2;color:#7f1d1d}
+.alerta-desvio strong{display:block;font-size:19px;margin-bottom:6px}
+.alerta-desvio .desvio-card{padding:9px 0;border-top:1px solid currentColor}
+.alerta-desvio .desvio-card:first-of-type{border-top:0}
+.alerta-desvio .small{color:inherit;line-height:1.45}
+
+</style></head><body><div class="card" id="areaComum">
+<h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
+<button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
+<form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
+<div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
+<div class="scanner" id="scanner">
+  <h2>Leitor de QR Code</h2>
+  <div class="sub">Aponte a câmera para uma etiqueta de Liberação de Produção.</div>
+  <div id="reader"></div>
+  <div class="status" id="statusLeitor">Câmera aguardando início.</div>
+  <button class="gray" type="button" onclick="fecharLeitor()">FECHAR LEITOR</button>
+</div>
+<div class="inspecao" id="inspecao">
+  <h2>Inspeção Volante</h2>
+  <div class="sub">Dados da etiqueta já conferidos pelo QR.</div>
+  <div class="qr-resumo">
+    <div class="qr-dado"><span>Máquina</span><strong id="inspMaq">-</strong></div>
+    <div class="qr-dado"><span>OP</span><strong id="inspOP">-</strong></div>
+    <div class="qr-dado"><span>Item</span><strong id="inspItem">-</strong></div>
+    <div class="qr-dado"><span>Setor</span><strong id="inspSetor">-</strong></div>
+  </div>
+  <div class="alerta-reincidencia" id="alertaReincidencia">
+    <strong>🚨 ATENÇÃO — PROBLEMA REINCIDENTE</strong>
+    <div class="small" id="alertaReincidenciaTexto"></div>
+  </div>
+  <label>Volante responsável *</label>
+  <div class="opcoes" id="opcoesVolante"></div>
+  <label>Tipo de inspeção *</label>
+  <div class="opcoes tipo" id="opcoesTipo"></div>
+
+  <div class="alerta-desvio" id="alertaDesvio">
+    <strong id="alertaDesvioTitulo">⚠️ DESVIO ATIVO</strong>
+    <div id="alertaDesvioConteudo"></div>
+  </div>
+
+  <label>Situação encontrada *</label>
+  <div class="situacoes" id="opcoesSituacao"></div>
+  <label>Informações <span class="small">(opcional)</span></label>
+  <textarea id="inspInfo" placeholder="Observações adicionais"></textarea>
+  <button class="green" id="btnEnviarInspecao" type="button" onclick="enviarInspecao()">ENVIAR INSPEÇÃO</button>
+  <button class="gray" type="button" onclick="cancelarInspecao()">CANCELAR / LER OUTRO QR</button>
+  <div class="status" id="statusInspecao">Preencha os campos obrigatórios.</div>
+</div>
+</div>
+<div class="admin-modal-bg" id="adminPinModal">
+  <div class="admin-modal">
+    <h3>Modo administrativo</h3>
+    <div class="sub">Digite o PIN para continuar.</div>
+    <input id="adminPinInput" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
+    <div class="admin-modal-actions">
+      <button class="gray" type="button" onclick="fecharPinAdmin()">CANCELAR</button>
+      <button type="button" onclick="confirmarPinAdmin()">ENTRAR</button>
+    </div>
+    <div class="status" id="adminPinStatus" style="display:none"></div>
+  </div>
+</div>
+
+
+
+<div class="admin-home" id="adminHome">
+  <h1>Área administrativa</h1>
+  <div class="sub">Liberação de Produção</div>
+  <div class="admin-tools" id="adminMenu">
+    <button class="green" type="button" onclick="mostrarFerramentaAdmin('consulta')">🔎 CONSULTA</button>
+    <button type="button" onclick="mostrarFerramentaAdmin('relatorio')">📊 RELATÓRIO</button>
+    <button class="orange" type="button" onclick="mostrarFerramentaAdmin('adminBox')">🛠️ CORREÇÃO</button>
+  </div>
+  <div class="admin-section" id="consulta"><h2>Consultar Produção</h2><div class="sub">Pesquise os registros enviados pelo formulário.</div>
+<label>OP</label><input id="qop" inputmode="numeric" placeholder="Ex.: 577110">
+<label>Item</label><input id="qitem" inputmode="numeric" placeholder="Ex.: 869">
+<label>Máquina</label><input id="qmaq" inputmode="numeric" placeholder="Ex.: 196">
+<label>Data</label><input id="qdata" type="date">
+<button type="button" onclick="consultarProducao()">PESQUISAR</button>
+<button class="gray" type="button" onclick="limparConsulta()">LIMPAR PESQUISA</button>
+<div class="status" id="statusConsulta">Informe um ou mais filtros e toque em PESQUISAR.</div><div id="listaConsulta"></div>
+<button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button></div>
+  <div class="admin-section" id="relatorio">
+  <h2>Relatório de Produção</h2>
+  <div class="sub">Resumo por período usando a data corrigida quando existir.</div>
+  <label>Período</label>
+  <select id="periodoRel" onchange="ajustarPeriodoRel()">
+    <option value="semana">Esta semana</option>
+    <option value="semanaAnterior">Semana anterior</option>
+    <option value="mes">Este mês</option>
+    <option value="mesAnterior">Mês anterior</option>
+    <option value="personalizado">Personalizado</option>
+  </select>
+  <div id="datasRel" style="display:none">
+    <label>De</label><input id="relInicio" type="date">
+    <label>Até</label><input id="relFim" type="date">
+  </div>
+  <button type="button" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
+  <div class="status" id="statusRelatorio">Selecione o período e toque em GERAR RELATÓRIO.</div>
+  <div id="conteudoRelatorio" style="display:none">
+    <div class="meta" id="periodoTexto"></div>
+    <div class="report-grid">
+      <div class="kpi"><strong id="kTotal">0</strong><span>Total de registros</span></div>
+      <div class="kpi"><strong id="kVoleios">0</strong><span>Voleios</span></div>
+      <div class="kpi"><strong id="kOK">0</strong><span>Peças OK</span></div>
+      <div class="kpi"><strong id="kNOK">0</strong><span>Peças NOK</span></div>
+    </div>
+    <div class="chart-card"><h3>Voleios por volante</h3><div class="chart-wrap"><canvas id="grafVolantes"></canvas></div></div>
+    <div class="chart-card"><h3>Registros por setor</h3><div class="chart-wrap"><canvas id="grafSetores"></canvas></div></div>
+    <div class="chart-card"><h3>Tipos de atividade</h3><div class="chart-wrap"><canvas id="grafTipos"></canvas></div></div>
+    <div class="chart-card"><h3>Top 10 problemas encontrados</h3><div class="chart-wrap"><canvas id="grafDefeitos"></canvas></div><ol class="rank" id="rankDefeitos"></ol></div>
+    <div class="report-actions">
+      <button class="green" type="button" onclick="window.print()">🖨️ IMPRIMIR / PDF</button>
+      <button class="gray" type="button" onclick="compartilharRelatorio()">📤 COMPARTILHAR</button>
+    </div>
+  </div>
+  <button class="gray" type="button" onclick="fecharRelatorio()">FECHAR RELATÓRIO</button>
+  <button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
+</div>
+  <div class="admin-section" id="adminBox">
+<h2>Correção administrativa</h2><div class="sub">O horário original é preservado.</div>
+<label>OP</label><input id="adminOP" inputmode="numeric">
+<label>Item</label><input id="adminItem" inputmode="numeric">
+<label>Máquina</label><input id="adminMaq" inputmode="numeric">
+<button type="button" onclick="buscarAdmin()">LOCALIZAR REGISTRO</button>
+<div id="adminResultado"></div>
+<button class="admin-back" type="button" onclick="voltarMenuAdmin()">← VOLTAR AO MENU ADMIN</button>
+</div>
+  <button class="red" id="btnSairAdmin" type="button" onclick="sairAdmin()">SAIR DA ÁREA ADMINISTRATIVA</button>
+</div>
+
+
+<div class="app-confirm-bg" id="confirmBg">
+  <div class="app-confirm" role="dialog" aria-modal="true">
+    <h2>CONFIRMAR DADOS</h2>
+    <div class="app-confirm-msg" id="confirmMsg"></div>
+    <div class="app-confirm-actions">
+      <button class="gray" type="button" id="confirmCancelar">CANCELAR</button>
+      <button type="button" id="confirmOk">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+function confirmarNoApp(msg){
+  return new Promise(resolve=>{
+    confirmMsg.textContent=msg;
+    confirmBg.style.display='flex';
+    const fechar=(valor)=>{
+      confirmBg.style.display='none';
+      confirmOk.onclick=null;
+      confirmCancelar.onclick=null;
+      resolve(valor);
+    };
+    confirmOk.onclick=()=>fechar(true);
+    confirmCancelar.onclick=()=>fechar(false);
+  });
+}
+
+// Listas locais de segurança: mantêm a produção funcionando se a configuração online não carregar.
+let VOLANTES=['Andreia','Alessandra','Danilo','Elaine','Marcelo','Mariana'];
+let PROBLEMAS=['Bolhas','Cavidade Amassada','Cortes','Crua','Deformações','Falha de Material','Falha no Corte','Falha no Ponto de Injeção','Fora de Medida','Fragmentos','Furada','Furo Obstruído','Manchas','Material Contaminado','Dureza NOK'];
+let MAQUINAS={"Linha 1":["168","186","234","235","495","494","202","203","491","197","198","254","255","016","023","024","027"],"Linha 2":["076","086","100","101","135","178","179","180","128","129","134"],"Linha 3":["542","541","560","585","756","757","706","705","558","590","591"],"Linha 4":["555","532","531","535","708","707"],"Linha 5":["196","609","259","260","074","068","097","776","775","444","402"],"LSR":["253","252","184"]};
+const CONFIG_URL="https://script.google.com/macros/s/AKfycbyLicum6F8vwyUmL97VrLzNEgsc7UZ2bI1Ot_MaGpIzOPkLUnUKzkCLGBCy4eo1sHXd/exec";
+async function carregarConfiguracao(){
+  try{
+    const r=await fetch(CONFIG_URL,{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(!j.ok||!Array.isArray(j.maquinas)||!j.maquinas.length) throw new Error(j.erro||'Configuração vazia');
+    const novo={};
+    [...j.maquinas].sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0)).forEach(x=>{
+      const l=String(x.linha||'').trim(),m=String(x.maquina||'').trim();
+      if(!l||!m)return;
+      if(!novo[l])novo[l]=[];
+      novo[l].push(m);
+    });
+    if(Object.keys(novo).length) MAQUINAS=novo;
+    if(Array.isArray(j.volantes)&&j.volantes.length){
+      const novosVolantes=[...j.volantes]
+        .sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0))
+        .map(x=>String(x.nome||'').trim())
+        .filter(Boolean);
+      if(novosVolantes.length) VOLANTES=novosVolantes;
+    }
+    if(Array.isArray(j.problemas)&&j.problemas.length){
+      const novosProblemas=[...j.problemas]
+        .sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0))
+        .map(x=>String(x.nome||'').trim())
+        .filter(Boolean);
+      if(novosProblemas.length) PROBLEMAS=novosProblemas;
+    }
+    // Se uma linha já estiver selecionada, atualiza o combo sem exigir recarregar a tela.
+    if(linha.value) atualizarMaquinas();
+    console.log('Configuração de máquinas, volantes e problemas carregada da planilha.');
+  }catch(e){
+    console.warn('Usando lista local de segurança:',e);
+  }
+}
+carregarConfiguracao();
+const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-pqsdMhautyuRJJzc-nu6i6yXS_VG9MreqzE-mVH7SyBu6irihocHeSmUJmWN29IxyDiX4XjhKfX/pub?gid=809263190&single=true&output=csv";
+const MODEL={name_prefixes:["B1"],task:"b1",dpi:203,density:3,label_type:1,speed:1};
+const SIZE={w_px:384,h_px:240,offset_y_px:4};
+let conectado=false, etiquetaURL="";
+function atualizarMaquinas(){const l=linha.value,s=maquina;s.innerHTML="";if(!l){s.disabled=true;s.innerHTML='<option value="">Primeiro selecione a linha</option>';return}s.disabled=false;s.innerHTML='<option value="">Selecione a máquina</option>';MAQUINAS[l].forEach(m=>s.add(new Option(m,m)))}
+function setStatus(t){document.getElementById('status').textContent=t}
+async function conectarB1(){try{if(!window.Niimbot||!Niimbot.isSupported())throw new Error('Web Bluetooth não disponível. Abra pelo Chrome em uma página HTTPS.');setStatus('Procurando B1...');const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('A impressora encontrada não foi identificada como B1 (id 4096).');conectado=true;setStatus('✓ B1 conectada — id '+p.modelId+' • protocolo '+(p.protocolVersion??'detectado'));}catch(e){conectado=false;setStatus('Erro: '+e.message)}}
+async function gerar(e){e.preventDefault();const it=item.value.trim(),o=op.value.trim(),m=maquina.value.trim(),s=setor.value.trim();const p=new URLSearchParams({usp:'pp_url','entry.510346288':m,'entry.982950365':o,'entry.1488788372':it,'entry.705084022':s});const url=FORM+'?'+p.toString();if(!await confirmarNoApp('OP: '+o+'\nItem: '+it+'\nMáquina: '+m+'\nSetor: '+s))return;desenharEtiqueta(url,o,it,m);linktxt.textContent=url;resultado.style.display='block';resultado.scrollIntoView({behavior:'smooth'});}
+function desenharEtiqueta(url,o,it,m){
+ const c=preview,x=c.getContext('2d');
+ x.imageSmoothingEnabled=false;
+ x.fillStyle='#fff';x.fillRect(0,0,384,240);
+ // Área textual refinada: maior contraste e hierarquia, sem alterar o QR aprovado.
+ x.fillStyle='#000';x.textBaseline='top';
+ x.font='bold 17px Arial';x.fillText('LIBERAÇÃO',10,13);x.fillText('DE PRODUÇÃO',10,34);
+ x.fillRect(10,60,158,2);
+ x.font='bold 20px Arial';x.fillText('OP:',10,76);x.font='bold 21px Arial';x.fillText(o,48,75);
+ x.font='bold 20px Arial';x.fillText('ITEM:',10,113);x.font='bold 21px Arial';x.fillText(it,70,112);
+ x.font='bold 20px Arial';x.fillText('MÁQ.:',10,150);x.font='bold 21px Arial';x.fillText(m,70,149);
+ 
+ // QR aprovado no teste físico: dimensões e quiet zone preservadas.
+ const holder=document.createElement('div');holder.style.position='fixed';holder.style.left='-9999px';document.body.appendChild(holder);
+ new QRCode(holder,{text:url,width:192,height:192,correctLevel:QRCode.CorrectLevel.L});
+ setTimeout(()=>{const q=holder.querySelector('canvas')||holder.querySelector('img');const draw=()=>{
+   x.fillStyle='#fff';x.fillRect(180,16,200,208);
+   x.drawImage(q,184,24,192,192);
+   etiquetaURL=c.toDataURL('image/png');holder.remove();
+ };if(q.tagName==='IMG'&&!q.complete)q.onload=draw;else draw()},100)
+}
+async function imprimirB1(){try{if(!etiquetaURL)throw new Error('Gere a etiqueta primeiro.');btnPrint.disabled=true;setStatus('Enviando etiqueta para a B1...');if(!conectado){const p=await Niimbot.identify(MODEL);if(!p||p.modelId!==4096)throw new Error('B1 não identificada.');conectado=true}await Niimbot.printImage(etiquetaURL,{model:MODEL,size:SIZE,copies:1,density:3,onProgress:s=>setStatus('B1: '+s)});setStatus('✓ Etiqueta impressa na B1.');}catch(e){conectado=false;setStatus('Erro ao imprimir: '+e.message)}finally{btnPrint.disabled=false}}
+function novoQR(){item.value='';op.value='';linha.value='';maquina.innerHTML='<option value="">Primeiro selecione a linha</option>';maquina.disabled=true;setor.value='';resultado.style.display='none';etiquetaURL='';item.focus();window.scrollTo({top:0,behavior:'smooth'})}
+
+
+let qrScanner=null, qrLendo=false;
+async function abrirLeitor(){
+  scanner.style.display='block';
+  scanner.scrollIntoView({behavior:'smooth'});
+  statusLeitor.textContent='Abrindo câmera...';
+  try{
+    if(!window.Html5Qrcode) throw new Error('Leitor QR não carregou. Verifique a internet.');
+    if(!qrScanner) qrScanner=new Html5Qrcode("reader");
+    if(qrLendo) return;
+    await qrScanner.start(
+      {facingMode:{exact:"environment"}},
+      {fps:12,qrbox:(vw,vh)=>{const lado=Math.floor(Math.min(vw,vh)*0.78);return {width:lado,height:lado};},aspectRatio:1.0,disableFlip:false},
+      qrLido,
+      ()=>{}
+    );
+    qrLendo=true;
+    try{
+      const video=document.querySelector('#reader video');
+      const track=video?.srcObject?.getVideoTracks?.()[0];
+      if(track){
+        const caps=track.getCapabilities?track.getCapabilities():{};
+        const adv=[];
+        if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous'))adv.push({focusMode:'continuous'});
+        if(caps.zoom&&typeof caps.zoom.min==='number'){const z=Math.min(Math.max(1.25,caps.zoom.min),caps.zoom.max);adv.push({zoom:z});}
+        if(adv.length)await track.applyConstraints({advanced:adv});
+      }
+    }catch(e){}
+    statusLeitor.textContent='Câmera ativa — centralize o QR e aguarde o foco.';
+  }catch(e){
+    statusLeitor.textContent='Erro ao abrir câmera: '+e.message;
+  }
+}
+async function pararLeitor(){
+  if(qrScanner&&qrLendo){
+    try{await qrScanner.stop()}catch(e){}
+    qrLendo=false;
+  }
+}
+async function fecharLeitor(){
+  await pararLeitor();
+  scanner.style.display='none';
+}
+async function qrLido(texto){
+  await pararLeitor();
+  try{
+    const u=new URL(texto);
+    const m=u.searchParams.get('entry.510346288')||'';
+    const o=u.searchParams.get('entry.982950365')||'';
+    const it=u.searchParams.get('entry.1488788372')||'';
+    const st=u.searchParams.get('entry.705084022')||'';
+    if(!it||!o||!m) throw new Error('Este QR não contém dados completos de Liberação de Produção.');
+    if(navigator.vibrate) navigator.vibrate(100);
+    scanner.style.display='none';
+    abrirInspecao({maquina:m,op:o,item:it,setor:st});
+  }catch(e){
+    statusLeitor.textContent='QR não reconhecido: '+e.message;
+    setTimeout(()=>abrirLeitor(),1200);
+  }
+}
+
+const TIPOS=['Voleio','Setup','Troca de OP'];
+let inspDados=null,inspVolante='',inspTipo='';
+function montarOpcoesInspecao(){
+  opcoesVolante.innerHTML=VOLANTES.map(v=>`<button type="button" class="opcao" data-v="${v}" onclick="selecionarVolante('${v}')">${v}</button>`).join('');
+  opcoesTipo.innerHTML=TIPOS.map(v=>`<button type="button" class="opcao" data-v="${v}" onclick="selecionarTipo('${v}')">${v}</button>`).join('');
+  const situacoes=['Peças OK',...PROBLEMAS];
+  opcoesSituacao.innerHTML=situacoes.map(v=>`<label class="situacao"><input type="checkbox" value="${v}"> <span>${v}</span></label>`).join('');
+  [...opcoesSituacao.querySelectorAll('input')].forEach(cb=>cb.addEventListener('change',()=>{
+    if(!cb.checked)return;
+    const todos=[...opcoesSituacao.querySelectorAll('input')];
+    if(cb.value==='Peças OK'){
+      todos.forEach(x=>{if(x!==cb)x.checked=false});
+    }else{
+      const ok=todos.find(x=>x.value==='Peças OK');
+      if(ok)ok.checked=false;
+    }
+  }));
+}
+function marcarBotao(container,valor){[...container.querySelectorAll('.opcao')].forEach(b=>b.classList.toggle('ativa',b.dataset.v===valor));}
+function selecionarVolante(v){inspVolante=v;localStorage.setItem('ultimoVolante',v);marcarBotao(opcoesVolante,v)}
+function selecionarTipo(v){inspTipo=v;marcarBotao(opcoesTipo,v)}
+async function verificarReincidenciaItem(d){
+  alertaReincidencia.style.display='none';
+  alertaReincidenciaTexto.textContent='';
+  try{
+    const x=await fetch(CSV_URL,{cache:'no-store'});
+    if(!x.ok)return;
+    const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));
+    const h=a.shift();
+    const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),
+          I=col(h,['Item']),M=col(h,['Máquina','Maquina']),
+          V=col(h,['Volante responsável','Responsável']),
+          SI=col(h,['Situação encontrada','Situação']);
+    const val=(r,i)=>i>=0?(r[i]??''):'';
+    const dataEfetiva=r=>String(val(r,DC)).trim()||val(r,D);
+    const canon=new Map(PROBLEMAS.map(p=>[norm(p),p]));
+    const registros=a.filter(r=>norm(val(r,I))===norm(d.item)).map((r,idx)=>{
+      const raw=String(val(r,SI)||'');
+      const partes=raw.split(/[|,]/).map(s=>s.trim()).filter(Boolean);
+      const probs=partes.map(s=>canon.get(norm(s))).filter(Boolean);
+      const ok=partes.some(s=>norm(s)==='pecas ok');
+      // Compatibilidade com registros antigos: qualquer situação não-OK também conta
+      // para não perder o histórico entre turnos.
+      const problematico=!ok && (probs.length>0 || partes.length>0);
+      return {idx,data:dataEfetiva(r),maquina:val(r,M),volante:val(r,V),raw,probs,ok,problematico};
+    });
+    // A planilha é cronológica; percorremos do registro mais recente para trás.
+    registros.reverse();
+    let seq=[];
+    for(const r of registros){
+      if(r.ok)break;
+      if(r.problematico)seq.push(r);
+      else break;
+    }
+    if(seq.length<2)return;
+    const nomes=[];
+    seq.forEach(r=>{
+      const ps=r.probs.length?r.probs:r.raw.split(/[|,]/).map(s=>s.trim()).filter(Boolean);
+      ps.forEach(p=>{if(p && !nomes.some(n=>norm(n)===norm(p)))nomes.push(p)});
+    });
+    const ult=seq[0];
+    alertaReincidenciaTexto.innerHTML=
+      `<b>Item ${esc(d.item)}</b> possui <b>${seq.length} inspeções consecutivas com problema</b>.<br>`+
+      `Problema(s): <b>${esc(nomes.join(', ')||'Situação NOK')}</b>.<br>`+
+      `Último registro: ${esc(ult.data||'-')} • Máquina ${esc(ult.maquina||'-')} • Volante ${esc(ult.volante||'-')}.`;
+    alertaReincidencia.style.display='block';
+    if(navigator.vibrate)navigator.vibrate([180,100,180]);
+  }catch(e){
+    console.warn('Não foi possível verificar reincidência:',e);
+  }
+}
+
+function escDesvio(v){
+  return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function dataBRDesvio(v){
+  const m=String(v||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m)return null;
+  return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]),23,59,59,999);
+}
+function classeValidadeDesvio(lista){
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  let pior='verde';
+  for(const d of lista){
+    const fim=dataBRDesvio(d.validade);
+    if(!fim)continue;
+    const dias=Math.floor((fim-hoje)/86400000);
+    if(dias<0)return 'vermelho';
+    if(dias<=5)pior='amarelo';
+  }
+  return pior;
+}
+async function verificarDesviosItem(d){
+  alertaDesvio.style.display='none';
+  alertaDesvio.classList.remove('amarelo','vermelho');
+  alertaDesvioConteudo.innerHTML='';
+  if(!d||!String(d.item||'').trim())return;
+  try{
+    const url=CONFIG_URL+'?acao=desvios&item='+encodeURIComponent(String(d.item).trim())+'&_='+Date.now();
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(!j.ok)throw new Error(j.erro||'Falha ao consultar desvios');
+    if(!j.temDesvio||!Array.isArray(j.desvios)||!j.desvios.length)return;
+
+    const classe=classeValidadeDesvio(j.desvios);
+    if(classe==='amarelo')alertaDesvio.classList.add('amarelo');
+    if(classe==='vermelho')alertaDesvio.classList.add('vermelho');
+    alertaDesvioTitulo.textContent=j.desvios.length>1
+      ? `⚠️ ${j.desvios.length} DESVIOS ATIVOS`
+      : '⚠️ DESVIO ATIVO';
+
+    alertaDesvioConteudo.innerHTML=j.desvios.map(x=>`
+      <div class="desvio-card">
+        <b>${escDesvio(x.numero||'Desvio')}</b><br>
+        <span class="small">
+          Validade: <b>${escDesvio(x.validade||'-')}</b>
+          ${x.maquina?` • Máquina ${escDesvio(x.maquina)}`:''}
+          ${x.op?` • OP ${escDesvio(x.op)}`:''}<br>
+          ${escDesvio(x.descricao||'')}
+        </span>
+      </div>`).join('');
+    alertaDesvio.style.display='block';
+    if(navigator.vibrate)navigator.vibrate([120,80,120]);
+  }catch(e){
+    console.warn('Não foi possível consultar desvios:',e);
+  }
+}
+
+async function abrirInspecao(d){
+  inspDados=d;inspMaq.textContent=d.maquina;inspOP.textContent=d.op;inspItem.textContent=d.item;inspSetor.textContent=d.setor||'-';
+  montarOpcoesInspecao();inspVolante=localStorage.getItem('ultimoVolante')||'';inspTipo='';
+  if(VOLANTES.includes(inspVolante))marcarBotao(opcoesVolante,inspVolante);else inspVolante='';
+  inspInfo.value='';statusInspecao.textContent='Preencha os campos obrigatórios.';btnEnviarInspecao.disabled=false;
+  alertaReincidencia.style.display='none';
+  alertaDesvio.style.display='none';alertaDesvio.classList.remove('amarelo','vermelho');alertaDesvioConteudo.innerHTML='';
+  inspecao.style.display='block';inspecao.scrollIntoView({behavior:'smooth'});
+  verificarReincidenciaItem(d);
+  verificarDesviosItem(d);
+}
+function cancelarInspecao(){inspecao.style.display='none';inspDados=null;abrirLeitor()}
+async function confirmarRegistroInspecao(d,limiteMs=12000){
+  const inicio=Date.now();
+  while(Date.now()-inicio<limiteMs){
+    await new Promise(r=>setTimeout(r,1800));
+    try{
+      const x=await fetch(CSV_URL,{cache:'no-store'}); if(!x.ok)continue;
+      const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim())); const h=a.shift();
+      const M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']);
+      const val=(r,i)=>i>=0?(r[i]??''):'';
+      const achou=a.slice(-20).some(r=>norm(val(r,M))===norm(d.maquina)&&norm(val(r,O))===norm(d.op)&&norm(val(r,I))===norm(d.item)&&norm(val(r,T))===norm(d.tipo)&&norm(val(r,V))===norm(d.volante));
+      if(achou)return true;
+    }catch(e){}
+  }
+  return false;
+}
+async function enviarInspecao(){
+  if(!inspDados)return;
+  const situacoes=[...opcoesSituacao.querySelectorAll('input:checked')].map(x=>x.value);
+  if(!inspVolante){statusInspecao.textContent='Selecione o volante responsável.';return}
+  if(!inspTipo){statusInspecao.textContent='Selecione o tipo de inspeção.';return}
+  if(!situacoes.length){statusInspecao.textContent='Selecione pelo menos uma situação encontrada.';return}
+  const dados={...inspDados,volante:inspVolante,tipo:inspTipo,situacoes:situacoes.join('|'),informacoes:inspInfo.value.trim()};
+  btnEnviarInspecao.disabled=true;statusInspecao.textContent='Enviando inspeção...';
+  try{
+    const b=new URLSearchParams({acao:'inspecao',...dados});
+    await fetch(CONFIG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b.toString()});
+    statusInspecao.textContent='Enviado. Confirmando gravação na planilha...';
+    const ok=await confirmarRegistroInspecao(dados);
+    if(!ok){statusInspecao.textContent='Não consegui confirmar a gravação. Não envie novamente antes de conferir a planilha.';btnEnviarInspecao.disabled=false;return}
+    statusInspecao.innerHTML='<div class="envio-ok">✓ Inspeção registrada</div>';
+    if(navigator.vibrate)navigator.vibrate([80,50,80]);
+    setTimeout(()=>{
+      inspecao.style.display='none';
+      scanner.style.display='none';
+      inspDados=null;
+      inspVolante='';
+      inspTipo='';
+      inspInfo.value='';
+      btnEnviarInspecao.disabled=false;
+      statusInspecao.textContent='Preencha os campos obrigatórios.';
+      window.scrollTo({top:0,behavior:'smooth'});
+    },1100);
+  }catch(e){statusInspecao.textContent='Erro ao enviar: '+e.message;btnEnviarInspecao.disabled=false}
+}
+
+
+const ADMIN_SCRIPT_URL=CONFIG_URL;
+let adminTap=0,adminTimer=null,adminRegistro=null;
+document.getElementById('tituloApp').addEventListener('click',()=>{
+ adminTap++;clearTimeout(adminTimer);adminTimer=setTimeout(()=>adminTap=0,500);
+ if(adminTap>=2){adminTap=0;abrirPinAdmin();}
+});
+function abrirPinAdmin(){
+ adminPinInput.value='';adminPinStatus.style.display='none';
+ adminPinModal.style.display='flex';
+ setTimeout(()=>adminPinInput.focus(),100);
+}
+function fecharPinAdmin(){adminPinModal.style.display='none';adminPinInput.value=''}
+function confirmarPinAdmin(){
+ if(adminPinInput.value==='2580'){
+   fecharPinAdmin();entrarAdmin();
+ }else{
+   adminPinStatus.textContent='PIN incorreto.';adminPinStatus.style.display='block';adminPinInput.select();
+ }
+}
+document.getElementById('adminPinInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarPinAdmin();});
+function fecharAdmin(){voltarMenuAdmin()}
+async function buscarAdmin(){
+ const opv=adminOP.value.trim(),itv=adminItem.value.trim(),mqv=adminMaq.value.trim();
+ if(!opv&&!itv&&!mqv){adminResultado.innerHTML='<div class="status">Informe OP, Item ou Máquina.</div>';return}
+ adminResultado.innerHTML='<div class="status">Localizando...</div>';
+ try{
+  const x=await fetch(CSV_URL,{cache:'no-store'}),a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim())),h=a.shift();
+  const D=col(h,['Carimbo de data/hora','Data']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),v=(r,i)=>i>=0?(r[i]??''):'';
+  const z=a.map((r,i)=>({r,linha:i+2})).filter(x=>(!opv||norm(v(x.r,O))===norm(opv))&&(!itv||norm(v(x.r,I))===norm(itv))&&(!mqv||norm(v(x.r,M))===norm(mqv))).reverse()[0];
+  if(!z){adminResultado.innerHTML='<div class="status">Nenhum registro encontrado.</div>';return}
+  adminRegistro={linha:z.linha,original:v(z.r,D),op:v(z.r,O),item:v(z.r,I),maquina:v(z.r,M)};
+  adminResultado.innerHTML=`<div class="result-card"><strong>Registro localizado</strong><div class="meta">Original: ${esc(v(z.r,D))}</div><div>OP ${esc(v(z.r,O))} • Item ${esc(v(z.r,I))} • Máquina ${esc(v(z.r,M))}</div><label>Nova data/hora</label><input id="adminNovaData" type="datetime-local"><label>Motivo</label><input id="adminMotivo" placeholder="Motivo da correção"><button class="orange" type="button" onclick="salvarAdmin()">SALVAR CORREÇÃO</button><div class="status" id="adminStatus">Aguardando.</div></div>`;
+ }catch(e){adminResultado.innerHTML='<div class="status">Erro: '+esc(e.message)+'</div>'}
+}
+async function salvarAdmin(){
+ const nova=adminNovaData.value,motivo=adminMotivo.value.trim();
+ if(!nova||!motivo){adminStatus.textContent='Informe nova data/hora e motivo.';return}
+ if(!ADMIN_SCRIPT_URL){adminStatus.textContent='Estrutura pronta. Falta conectar o Apps Script.';return}
+ try{
+  adminStatus.textContent='Enviando correção...';
+  const b=new URLSearchParams({...adminRegistro,novaDataHora:nova,motivo});
+  await fetch(ADMIN_SCRIPT_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+    body:b.toString()
+  });
+  adminStatus.textContent='✓ Correção enviada. Confira a planilha.';
+}catch(e){
+  adminStatus.textContent='Erro ao enviar: '+e.message;
+}
+}
+function abrirConsulta(){consulta.style.display=consulta.style.display==='block'?'none':'block';if(consulta.style.display==='block')consulta.scrollIntoView({behavior:'smooth'})}
+function parseCSV(t){let a=[],r=[],f='',q=false;for(let i=0;i<t.length;i++){let c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'){r.push(f.replace(/\r$/,''));a.push(r);r=[];f=''}else f+=c}if(f||r.length){r.push(f);a.push(r)}return a}
+function norm(s){return String(s??'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function col(h,n){let x=h.map(norm);for(let z of n){let i=x.findIndex(v=>v===norm(z));if(i>=0)return i}for(let z of n){let i=x.findIndex(v=>v.startsWith(norm(z)));if(i>=0)return i}return -1}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function iso(v){let m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:''}
+async function consultarProducao(){statusConsulta.textContent='Consultando planilha...';listaConsulta.innerHTML='';try{let x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Não foi possível acessar a planilha.');let a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));let h=a.shift();let D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),S=col(h,['Setor']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Observações','Observacao']);let v=(r,i)=>i>=0?(r[i]??''):'';let dataEfetiva=r=>String(v(r,DC)).trim()||v(r,D);let z=a.filter(r=>(!qop.value||norm(v(r,O)).includes(norm(qop.value)))&&(!qitem.value||norm(v(r,I)).includes(norm(qitem.value)))&&(!qmaq.value||norm(v(r,M)).includes(norm(qmaq.value)))&&(!qdata.value||iso(dataEfetiva(r))===qdata.value)).reverse();statusConsulta.textContent=z.length?z.length+' registro(s) encontrado(s).':'Nenhum registro encontrado.';listaConsulta.innerHTML=z.slice(0,100).map(r=>`<div class="result-card"><strong>OP ${esc(v(r,O)||'-')}</strong> • Item ${esc(v(r,I)||'-')} • Máquina ${esc(v(r,M)||'-')}<div class="meta">${esc(dataEfetiva(r))}${v(r,DC)?' <strong>(corrigida)</strong>':''}${v(r,S)?' • '+esc(v(r,S)):''}</div>${v(r,T)?'<div><strong>Tipo:</strong> '+esc(v(r,T))+'</div>':''}${v(r,V)?'<div><strong>Volante:</strong> '+esc(v(r,V))+'</div>':''}${v(r,SI)?'<div><strong>Situação:</strong> '+esc(v(r,SI))+'</div>':''}${v(r,OB)?'<div><strong>Observações:</strong> '+esc(v(r,OB))+'</div>':''}</div>`).join('')}catch(e){statusConsulta.textContent='Erro na consulta: '+e.message}}
+function limparConsulta(){qop.value='';qitem.value='';qmaq.value='';qdata.value='';listaConsulta.innerHTML='';statusConsulta.textContent='Informe um ou mais filtros e toque em PESQUISAR.'}
+
+let chartsRel={};
+
+function abrirRelatorio(){
+  relatorio.style.display=relatorio.style.display==='block'?'none':'block';
+  if(relatorio.style.display==='block'){ajustarPeriodoRel();relatorio.scrollIntoView({behavior:'smooth'});}
+}
+function fecharRelatorio(){relatorio.style.display='none'}
+function ajustarPeriodoRel(){datasRel.style.display=periodoRel.value==='personalizado'?'block':'none'}
+
+function dataBRParaDate(s){
+  const m=String(s||'').match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(!m)return null;
+  return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+}
+function inicioDia(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,0,0,0)}
+function fimDia(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999)}
+function addDias(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function faixaRelatorio(){
+  const hoje=inicioDia(new Date()), p=periodoRel.value; let ini,fim;
+  if(p==='semana'||p==='semanaAnterior'){
+    const dow=(hoje.getDay()+6)%7; ini=addDias(hoje,-dow);
+    if(p==='semanaAnterior')ini=addDias(ini,-7);
+    fim=fimDia(addDias(ini,6));
+  }else if(p==='mes'||p==='mesAnterior'){
+    let y=hoje.getFullYear(),m=hoje.getMonth()+(p==='mesAnterior'?-1:0);
+    ini=new Date(y,m,1);fim=fimDia(new Date(y,m+1,0));
+  }else{
+    if(!relInicio.value||!relFim.value)throw Error('Informe as datas inicial e final.');
+    ini=inicioDia(new Date(relInicio.value+'T00:00:00'));fim=fimDia(new Date(relFim.value+'T00:00:00'));
+  }
+  return {ini,fim};
+}
+function fmtData(d){return d.toLocaleDateString('pt-BR')}
+function contar(arr){const o={};arr.filter(Boolean).forEach(x=>o[x]=(o[x]||0)+1);return o}
+function ordenar(o){return Object.entries(o).sort((a,b)=>b[1]-a[1])}
+function destruirChart(id){if(chartsRel[id]){chartsRel[id].destroy();delete chartsRel[id]}}
+function criarChart(id,type,labels,data,label){
+  destruirChart(id);
+  const ctx=document.getElementById(id);
+  chartsRel[id]=new Chart(ctx,{type,data:{labels,datasets:[{label,data}]},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:type==='pie',position:'bottom'},tooltip:{callbacks:{
+      label:c=>{const total=c.dataset.data.reduce((a,b)=>a+b,0);const pct=total?((c.raw/total)*100).toFixed(1):0;return type==='pie'?`${c.label}: ${c.raw} (${pct}%)`:`${c.raw}`;}
+    }}},
+    scales:type==='pie'?{}:{y:{beginAtZero:true,ticks:{precision:0}}}
+  }});
+}
+async function gerarRelatorio(){
+  statusRelatorio.textContent='Montando relatório...';conteudoRelatorio.style.display='none';
+  try{
+    if(!window.Chart)throw Error('Biblioteca de gráficos não carregou.');
+    const {ini,fim}=faixaRelatorio();
+    const resp=await fetch(CSV_URL,{cache:'no-store'});if(!resp.ok)throw Error('Não foi possível acessar a planilha.');
+    let a=parseCSV(await resp.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
+    const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),S=col(h,['Setor']),
+          T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),
+          SI=col(h,['Situação encontrada','Situação']);
+    const val=(r,i)=>i>=0?(r[i]??''):'';
+    const dados=a.map(r=>({r,data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D))}))
+                 .filter(x=>x.data&&x.data>=ini&&x.data<=fim);
+    const rows=dados.map(x=>x.r);
+    const tipos=rows.map(r=>String(val(r,T)).trim()), voleios=rows.filter(r=>norm(val(r,T))==='voleio');
+    const sit=rows.map(r=>String(val(r,SI)).trim());
+    const problemaCanonico=new Map(PROBLEMAS.map(p=>[norm(p),p]));
+    const problemasPorRegistro=sit.map(s=>
+      String(s).split(/[|,]/).map(x=>x.trim()).filter(Boolean)
+        .map(x=>problemaCanonico.get(norm(x))).filter(Boolean)
+    );
+    kTotal.textContent=rows.length;kVoleios.textContent=voleios.length;
+    kOK.textContent=sit.filter(x=>norm(x).includes('pecas ok')).length;
+    kNOK.textContent=problemasPorRegistro.filter(x=>x.length>0).length;
+    periodoTexto.textContent=`Período: ${fmtData(ini)} a ${fmtData(fim)}`;
+
+    let z=ordenar(contar(voleios.map(r=>String(val(r,V)).trim())));
+    criarChart('grafVolantes','pie',z.map(x=>x[0]),z.map(x=>x[1]),'Voleios');
+
+    z=ordenar(contar(rows.map(r=>String(val(r,S)).trim())));
+    criarChart('grafSetores','pie',z.map(x=>x[0]),z.map(x=>x[1]),'Registros');
+
+    z=ordenar(contar(tipos));
+    criarChart('grafTipos','bar',z.map(x=>x[0]),z.map(x=>x[1]),'Registros');
+
+    const defeitos=problemasPorRegistro.flat();
+    z=ordenar(contar(defeitos)).slice(0,10);
+    criarChart('grafDefeitos','bar',z.map(x=>x[0]),z.map(x=>x[1]),'Ocorrências');
+    rankDefeitos.innerHTML=z.map(([n,q])=>`<li><strong>${esc(n)}</strong> — ${q}</li>`).join('');
+
+    conteudoRelatorio.style.display='block';
+    statusRelatorio.textContent=rows.length?`${rows.length} registro(s) no período.`:'Nenhum registro no período.';
+  }catch(e){statusRelatorio.textContent='Erro no relatório: '+e.message}
+}
+async function compartilharRelatorio(){
+  const texto=`Relatório de Produção\n${periodoTexto.textContent}\nTotal: ${kTotal.textContent}\nVoleios: ${kVoleios.textContent}\nPeças OK: ${kOK.textContent}\nPeças NOK: ${kNOK.textContent}`;
+  try{
+    if(navigator.share)await navigator.share({title:'Relatório de Produção',text:texto});
+    else{await navigator.clipboard.writeText(texto);alert('Resumo copiado.');}
+  }catch(e){}
+}
+
+
+function entrarAdmin(){
+  areaComum.style.display='none';
+  adminHome.style.display='block';
+  adminMenu.style.display='grid';
+  ['consulta','relatorio','adminBox'].forEach(id=>document.getElementById(id).style.display='none');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function mostrarFerramentaAdmin(id){
+  adminMenu.style.display='none';
+  ['consulta','relatorio','adminBox'].forEach(x=>document.getElementById(x).style.display=x===id?'block':'none');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function voltarMenuAdmin(){
+  ['consulta','relatorio','adminBox'].forEach(id=>document.getElementById(id).style.display='none');
+  adminMenu.style.display='grid';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function sairAdmin(){
+  ['consulta','relatorio','adminBox'].forEach(id=>document.getElementById(id).style.display='none');
+  adminHome.style.display='none';
+  areaComum.style.display='block';
+  adminResultado.innerHTML='';adminRegistro=null;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+</script></body></html>
