@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V17.1</title>
+<title>Liberação de Produção V18</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -61,13 +61,14 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .situacoes{display:grid;gap:8px;margin-top:8px}.situacao{display:flex;align-items:center;gap:10px;background:#0f141b;border:1px solid #334155;border-radius:10px;padding:12px;font-weight:700}.situacao input{width:22px;height:22px;margin:0}
 #inspInfo{min-height:80px;width:100%;box-sizing:border-box;padding:13px;margin-top:5px;border:1px solid #3b4758;border-radius:9px;font-size:16px;background:#0f141b;color:#f8fafc;resize:vertical}
 .envio-ok{text-align:center;font-size:20px;font-weight:700;padding:20px}
+.fila-status{margin:12px 0;padding:10px 12px;border-radius:10px;background:#0f141b;border:1px solid #334155;font-size:13px;color:#cbd5e1}.fila-status.pendente{border-color:#d97706;background:#2a1d0b;color:#fde68a}.fila-status.ok{border-color:#15803d;color:#bbf7d0}.fila-status strong{font-size:15px}
 
 .alerta-reincidencia{display:none;margin:14px 0;padding:14px;border:2px solid #dc2626;border-radius:14px;background:#fee2e2;color:#7f1d1d}
 .alerta-reincidencia strong{display:block;font-size:19px;margin-bottom:6px}
 .alerta-reincidencia .small{color:#7f1d1d;line-height:1.45}
 </style></head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
-<button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div>
+<button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div><div class="fila-status" id="filaStatus">✓ Nenhuma inspeção pendente.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label>Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
 <div id="resultado"><canvas id="preview" width="384" height="240"></canvas><button class="orange" id="btnPrint" type="button" onclick="imprimirB1()">IMPRIMIR NA B1</button><div class="small" id="linktxt"></div></div><button class="green" type="button" onclick="abrirLeitor()">📷 LER QR CODE</button>
 <div class="scanner" id="scanner">
@@ -434,20 +435,66 @@ async function abrirInspecao(d){
   verificarReincidenciaItem(d);
 }
 function cancelarInspecao(){inspecao.style.display='none';inspDados=null;abrirLeitor()}
-async function confirmarRegistroInspecao(d,limiteMs=12000){
+const FILA_KEY='lp_fila_inspecoes_v18';
+let sincronizandoFila=false;
+function lerFila(){try{const x=JSON.parse(localStorage.getItem(FILA_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
+function salvarFila(f){localStorage.setItem(FILA_KEY,JSON.stringify(f));atualizarStatusFila()}
+function criarIdFila(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function atualizarStatusFila(msg=''){
+  const el=document.getElementById('filaStatus');if(!el)return;
+  const n=lerFila().length;
+  el.className='fila-status '+(n?'pendente':'ok');
+  el.innerHTML=n?`⏳ <strong>${n} inspeção(ões) pendente(s)</strong>${msg?'<br>'+esc(msg):'<br>Envio automático quando a conexão estiver disponível.'}`:'✓ Nenhuma inspeção pendente.';
+}
+async function contarRegistrosIguais(d){
+  const x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Planilha indisponível');
+  const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
+  const M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Informações','Observações','Observacao']);
+  const val=(r,i)=>i>=0?(r[i]??''):'';
+  return a.filter(r=>norm(val(r,M))===norm(d.maquina)&&norm(val(r,O))===norm(d.op)&&norm(val(r,I))===norm(d.item)&&norm(val(r,T))===norm(d.tipo)&&norm(val(r,V))===norm(d.volante)&&norm(val(r,SI))===norm(d.situacoes)&&norm(val(r,OB))===norm(d.informacoes)).length;
+}
+async function confirmarItemFila(item,limiteMs=18000){
   const inicio=Date.now();
   while(Date.now()-inicio<limiteMs){
     await new Promise(r=>setTimeout(r,1800));
-    try{
-      const x=await fetch(CSV_URL,{cache:'no-store'}); if(!x.ok)continue;
-      const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim())); const h=a.shift();
-      const M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']);
-      const val=(r,i)=>i>=0?(r[i]??''):'';
-      const achou=a.slice(-20).some(r=>norm(val(r,M))===norm(d.maquina)&&norm(val(r,O))===norm(d.op)&&norm(val(r,I))===norm(d.item)&&norm(val(r,T))===norm(d.tipo)&&norm(val(r,V))===norm(d.volante));
-      if(achou)return true;
-    }catch(e){}
+    try{if(await contarRegistrosIguais(item.dados)>Number(item.baseline||0))return true}catch(e){}
   }
   return false;
+}
+function removerDaFila(id){salvarFila(lerFila().filter(x=>x.id!==id))}
+async function tentarEnviarItemFila(item,{aguardar=true}={}){
+  // Se já houve tentativa, primeiro consulta a planilha. Isso evita reenviar algo que
+  // chegou ao Google mas demorou para aparecer no CSV publicado.
+  if(item.tentado){
+    try{if(await contarRegistrosIguais(item.dados)>Number(item.baseline||0)){removerDaFila(item.id);return 'confirmado'}}catch(e){return 'offline'}
+  }else{
+    try{item.baseline=await contarRegistrosIguais(item.dados)}catch(e){return 'offline'}
+  }
+  try{
+    const b=new URLSearchParams({acao:'inspecao',...item.dados});
+    await fetch(CONFIG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b.toString()});
+    item.tentado=true;item.ultimaTentativa=Date.now();
+    const f=lerFila(),i=f.findIndex(x=>x.id===item.id);if(i>=0){f[i]=item;salvarFila(f)}
+  }catch(e){return 'offline'}
+  if(aguardar&&await confirmarItemFila(item)){removerDaFila(item.id);return 'confirmado'}
+  return 'pendente';
+}
+async function sincronizarFila(){
+  if(sincronizandoFila||!navigator.onLine)return;
+  sincronizandoFila=true;
+  try{
+    let fila=lerFila();
+    for(const item of fila){
+      const atual=lerFila().find(x=>x.id===item.id);if(!atual)continue;
+      const r=await tentarEnviarItemFila(atual,{aguardar:false});
+      if(r==='offline')break;
+      // Itens já tentados nunca são POSTados novamente nesta passagem; na próxima
+      // sincronização a planilha é consultada primeiro, protegendo contra duplicidade.
+    }
+  }finally{sincronizandoFila=false;atualizarStatusFila()}
+}
+function voltarInicioAposInspecao(){
+  inspecao.style.display='none';scanner.style.display='none';inspDados=null;inspVolante='';inspTipo='';inspInfo.value='';btnEnviarInspecao.disabled=false;statusInspecao.textContent='Preencha os campos obrigatórios.';window.scrollTo({top:0,behavior:'smooth'});
 }
 async function enviarInspecao(){
   if(!inspDados)return;
@@ -456,28 +503,25 @@ async function enviarInspecao(){
   if(!inspTipo){statusInspecao.textContent='Selecione o tipo de inspeção.';return}
   if(!situacoes.length){statusInspecao.textContent='Selecione pelo menos uma situação encontrada.';return}
   const dados={...inspDados,volante:inspVolante,tipo:inspTipo,situacoes:situacoes.join('|'),informacoes:inspInfo.value.trim()};
-  btnEnviarInspecao.disabled=true;statusInspecao.textContent='Enviando inspeção...';
-  try{
-    const b=new URLSearchParams({acao:'inspecao',...dados});
-    await fetch(CONFIG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b.toString()});
-    statusInspecao.textContent='Enviado. Confirmando gravação na planilha...';
-    const ok=await confirmarRegistroInspecao(dados);
-    if(!ok){statusInspecao.textContent='Não consegui confirmar a gravação. Não envie novamente antes de conferir a planilha.';btnEnviarInspecao.disabled=false;return}
+  const itemFila={id:criarIdFila(),criadoEm:Date.now(),tentado:false,baseline:0,dados};
+  const fila=lerFila();fila.push(itemFila);salvarFila(fila); // primeiro salva no aparelho
+  btnEnviarInspecao.disabled=true;statusInspecao.textContent='Inspeção protegida no aparelho. Tentando enviar...';
+  const r=await tentarEnviarItemFila(itemFila,{aguardar:true});
+  if(r==='confirmado'){
     statusInspecao.innerHTML='<div class="envio-ok">✓ Inspeção registrada</div>';
     if(navigator.vibrate)navigator.vibrate([80,50,80]);
-    setTimeout(()=>{
-      inspecao.style.display='none';
-      scanner.style.display='none';
-      inspDados=null;
-      inspVolante='';
-      inspTipo='';
-      inspInfo.value='';
-      btnEnviarInspecao.disabled=false;
-      statusInspecao.textContent='Preencha os campos obrigatórios.';
-      window.scrollTo({top:0,behavior:'smooth'});
-    },1100);
-  }catch(e){statusInspecao.textContent='Erro ao enviar: '+e.message;btnEnviarInspecao.disabled=false}
+    setTimeout(voltarInicioAposInspecao,1100);
+  }else{
+    statusInspecao.innerHTML='<div class="envio-ok">⏳ Inspeção salva como pendente</div><div class="small">Ela não será perdida. O aplicativo confirmará ou enviará automaticamente quando o Google estiver disponível.</div>';
+    atualizarStatusFila('Registro protegido no aparelho.');
+    if(navigator.vibrate)navigator.vibrate([120,70,120]);
+    setTimeout(voltarInicioAposInspecao,2200);
+  }
 }
+window.addEventListener('online',()=>setTimeout(sincronizarFila,1200));
+window.addEventListener('load',()=>{atualizarStatusFila();setTimeout(sincronizarFila,2500)});
+setInterval(sincronizarFila,60000);
+
 
 
 const ADMIN_SCRIPT_URL=CONFIG_URL;
