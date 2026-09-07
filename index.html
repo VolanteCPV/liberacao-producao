@@ -70,12 +70,13 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 /* ADM TURNOS V18.2 */
 .turnos-home{display:none;max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241;color:#f8fafc}
 .turnos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.turnos-grid button{margin-top:0}
-.turnos-table-wrap{overflow-x:auto;margin-top:12px}.turnos-table{width:100%;border-collapse:separate;border-spacing:5px;font-size:13px}.turnos-table th{color:#cbd5e1;padding:5px}.turnos-table td{padding:0;text-align:center}.turnos-maq{font-weight:800;white-space:nowrap;padding:9px!important}.turnos-cell{min-width:58px;padding:10px 6px!important;border-radius:8px;font-weight:800;cursor:pointer;border:1px solid #334155}.turnos-sp{background:#e5e7eb!important;color:#111827!important}.turnos-maq{touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}.turnos-zero{background:#7f1d1d;color:#fecaca}.turnos-um{background:#854d0e;color:#fef3c7}.turnos-ok{background:#14532d;color:#bbf7d0}.turnos-detail{display:none;margin-top:14px}.turnos-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:12px 0}.turnos-summary div{background:#0f141b;border:1px solid #334155;border-radius:9px;padding:9px;text-align:center}.turnos-summary strong{display:block;font-size:20px}.turnos-summary span{font-size:11px;color:#94a3b8}
+.turnos-table-wrap{overflow-x:auto;margin-top:12px}.turnos-table{width:100%;border-collapse:separate;border-spacing:5px;font-size:13px}.turnos-table th{color:#cbd5e1;padding:5px}.turnos-table td{padding:0;text-align:center}.turnos-maq{font-weight:800;white-space:nowrap;padding:9px!important}.turnos-cell{min-width:58px;padding:10px 6px!important;border-radius:8px;font-weight:800;cursor:pointer;border:1px solid #334155}.turnos-sp{background:#e5e7eb!important;color:#111827!important}.turnos-pf{background:#1e3a5f!important;color:#dbeafe!important;border-color:#60a5fa!important}.turnos-maq{touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}.turnos-zero{background:#7f1d1d;color:#fecaca}.turnos-um{background:#854d0e;color:#fef3c7}.turnos-ok{background:#14532d;color:#bbf7d0}.turnos-detail{display:none;margin-top:14px}.turnos-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:12px 0}.turnos-summary div{background:#0f141b;border:1px solid #334155;border-radius:9px;padding:9px;text-align:center}.turnos-summary strong{display:block;font-size:20px}.turnos-summary span{font-size:11px;color:#94a3b8}
 
 /* Modal SP interno — sem prompt/confirm do navegador */
 .sp-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:10050;align-items:flex-end;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(3px)}
 .sp-modal{width:min(440px,100%);background:#151b23;border:1px solid #475569;border-radius:26px;padding:20px;box-sizing:border-box;box-shadow:0 24px 70px rgba(0,0,0,.55)}
 .sp-handle{width:70px;height:6px;border-radius:99px;background:#64748b;margin:0 auto 18px}.sp-title{font-size:28px;font-weight:900;margin:0}.sp-sub{font-size:18px;color:#94a3b8;margin:3px 0 18px}.sp-label{font-size:17px;font-weight:800;margin:10px 0}.sp-shifts{display:grid;gap:10px}.sp-shift{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:12px;width:100%;text-align:left;background:#0f141b;border:2px solid #475569;border-radius:16px;padding:12px;color:#f8fafc;margin:0}.sp-shift.ativa{border-color:#3b82f6;background:#172033}.sp-num{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#2563eb;font-size:25px;font-weight:900}.sp-shift strong{font-size:18px;display:block}.sp-shift span{color:#b9c6d8;font-size:16px}.sp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.sp-actions button{margin:0}.sp-confirmar{background:#2563eb}.sp-confirmar.retirar{background:#dc2626}
+.status-tipo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}.status-tipo button{background:#0f141b;border:1px solid #475569;color:#e5e7eb;padding:12px 8px;border-radius:12px;font-weight:800}.status-tipo button.ativa{border-color:#60a5fa;background:#172554;color:#dbeafe}
 @media(min-width:600px){.sp-modal-bg{align-items:center}}
 </style></head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
@@ -212,7 +213,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <label>Data</label><input id="turnosData" type="date" onchange="carregarPainelTurnos()">
   <label>Linha</label><select id="turnosLinha" onchange="carregarPainelTurnos()"></select>
   <div class="status" id="turnosStatus">Selecione a data e a linha.</div>
-  <div class="turnos-summary" id="turnosResumo" style="display:none"><div><strong id="turnosMaqTotal">0</strong><span>Máquinas</span></div><div><strong id="turnosInspec">0</strong><span>Com inspeção</span></div><div><strong id="turnosSPTotal">0</strong><span>Em SP</span></div><div><strong id="turnosSem">0</strong><span>Sem inspeção</span></div></div>
+  <div class="turnos-summary" id="turnosResumo" style="display:none"><div><strong id="turnosMaqTotal">0</strong><span>Máquinas</span></div><div><strong id="turnosInspec">0</strong><span>Com inspeção</span></div><div><strong id="turnosSPTotal">0</strong><span>Em SP</span></div><div><strong id="turnosPFTotal">0</strong><span>Em PF</span></div><div><strong id="turnosSem">0</strong><span>Sem inspeção</span></div></div>
   <div class="turnos-table-wrap" id="turnosTabela"></div>
   <div class="turnos-detail" id="turnosDetalhe"></div>
   <button class="red" type="button" onclick="sairTurnos()">SAIR DO ADM TURNOS</button>
@@ -223,7 +224,9 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <div class="sp-modal" role="dialog" aria-modal="true" aria-labelledby="spModalTitulo">
     <div class="sp-handle"></div>
     <h2 class="sp-title" id="spModalTitulo">Máquina</h2>
-    <div class="sp-sub">Sem Programação</div>
+    <div class="sp-sub" id="spModalSub">Status da produção</div>
+    <div class="sp-label">O que deseja marcar?</div>
+    <div class="status-tipo"><button type="button" data-tipo="sp" onclick="selecionarTipoStatus('sp')">SP<br><small>Sem Programação</small></button><button type="button" data-tipo="pf" onclick="selecionarTipoStatus('pf')">PF<br><small>Produção Finalizada</small></button></div>
     <div class="sp-label">Selecione o turno:</div>
     <div class="sp-shifts">
       <button class="sp-shift" type="button" data-turno="1" onclick="selecionarTurnoSP(1)"><span class="sp-num">1</span><span><strong>1º Turno</strong><span>06:00 – 13:50</span></span></button>
@@ -310,6 +313,7 @@ carregarConfiguracao();
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSeYWRS5Ko14PHWUqVu6eMioVC16M5WsUJ8x5-szCYg8nbzu5Q/viewform";
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-pqsdMhautyuRJJzc-nu6i6yXS_VG9MreqzE-mVH7SyBu6irihocHeSmUJmWN29IxyDiX4XjhKfX/pub?gid=809263190&single=true&output=csv";
 const SP_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-pqsdMhautyuRJJzc-nu6i6yXS_VG9MreqzE-mVH7SyBu6irihocHeSmUJmWN29IxyDiX4XjhKfX/pub?gid=1307720460&single=true&output=csv";
+const PF_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-pqsdMhautyuRJJzc-nu6i6yXS_VG9MreqzE-mVH7SyBu6irihocHeSmUJmWN29IxyDiX4XjhKfX/pub?gid=1220568541&single=true&output=csv";
 const MODEL={name_prefixes:["B1"],task:"b1",dpi:203,density:3,label_type:1,speed:1};
 const SIZE={w_px:384,h_px:240,offset_y_px:4};
 let conectado=false, etiquetaURL="";
@@ -593,7 +597,7 @@ if(gatilhoTurnos){
   });
 }
 // =========================
-let TURNOS_LINHAS=[],turnosFalhas=0,turnosBloqueadoAte=0,turnosRegistros=[],turnosSP=[];
+let TURNOS_LINHAS=[],turnosFalhas=0,turnosBloqueadoAte=0,turnosRegistros=[],turnosSP=[],turnosPF=[];
 const TURNOS_LOCK_MS=5*60*1000;
 function hojeLocalISO(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`}
 function abrirLoginTurnos(){
@@ -633,72 +637,89 @@ function turnoFaixa(dataISO,n){
 function emTurno(dt,dataISO,n){const f=turnoFaixa(dataISO,n);return dt>=f.ini&&dt<f.fim}
 function dataISOparaBR(v){const a=String(v||'').split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:v}
 function turnoSPKey(v){const x=String(v||'').trim().toLowerCase();if(x==='1'||x.startsWith('1'))return '1';if(x==='2'||x.startsWith('2'))return '2';if(x==='3'||x.startsWith('3'))return '3';return x}
-function temSP(dataISO,lin,maq,n){const d=dataISOparaBR(dataISO);return turnosSP.some(x=>x.data===d&&x.linha===lin&&x.maquina===maq&&turnoSPKey(x.turno)===String(n)&&String(x.status).toUpperCase()==='SP')}
-async function carregarSP(){
-  try{
-    const r=await fetch(SP_CSV_URL,{cache:'no-store'});if(!r.ok)throw Error('SP indisponível');
-    let a=parseCSV(await r.text()).filter(r=>r.some(v=>String(v).trim()));if(!a.length){turnosSP=[];return}
-    const h=a.shift(),D=col(h,['Data']),T=col(h,['Turno']),L=col(h,['Linha']),M=col(h,['Máquina','Maquina']),S=col(h,['Status']),v=(r,i)=>i>=0?String(r[i]??'').trim():'';
-    turnosSP=a.map(r=>({data:v(r,D),turno:v(r,T),linha:v(r,L),maquina:v(r,M),status:v(r,S)}));
-  }catch(e){turnosSP=[]}
+function turnoStatusKey(v){const x=String(v||'').trim().toLowerCase();if(x==='1'||x.startsWith('1'))return '1';if(x==='2'||x.startsWith('2'))return '2';if(x==='3'||x.startsWith('3'))return '3';return x}
+function turnoSPKey(v){return turnoStatusKey(v)}
+function temSP(dataISO,lin,maq,n){const d=dataISOparaBR(dataISO);return turnosSP.some(x=>x.data===d&&x.linha===lin&&x.maquina===maq&&turnoStatusKey(x.turno)===String(n)&&String(x.status).toUpperCase()==='SP')}
+function temPF(dataISO,lin,maq,n){const d=dataISOparaBR(dataISO);return turnosPF.some(x=>x.data===d&&x.linha===lin&&x.maquina===maq&&turnoStatusKey(x.turno)===String(n)&&String(x.status).toUpperCase()==='PF')}
+async function carregarStatusCSV(url,tipo){
+  const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(tipo+' indisponível');
+  let a=parseCSV(await r.text()).filter(r=>r.some(v=>String(v).trim()));if(!a.length)return [];
+  const h=a.shift(),D=col(h,['Data']),T=col(h,['Turno']),L=col(h,['Linha']),M=col(h,['Máquina','Maquina']),S=col(h,['Status']),v=(r,i)=>i>=0?String(r[i]??'').trim():'';
+  return a.map(r=>({data:v(r,D),turno:v(r,T),linha:v(r,L),maquina:v(r,M),status:v(r,S)}));
 }
-async function enviarSP(maq,n,comando){
-  const b=new URLSearchParams({acao:'sp',data:dataISOparaBR(turnosData.value),turno:String(n),linha:turnosLinha.value,maquina:String(maq),comando});
+async function carregarSP(){try{turnosSP=await carregarStatusCSV(SP_CSV_URL,'SP')}catch(e){turnosSP=[]}}
+async function carregarPF(){try{turnosPF=await carregarStatusCSV(PF_CSV_URL,'PF')}catch(e){turnosPF=[]}}
+async function enviarStatus(tipo,maq,n,comando){
+  const b=new URLSearchParams({acao:tipo,data:dataISOparaBR(turnosData.value),turno:String(n),linha:turnosLinha.value,maquina:String(maq),comando});
   await fetch(CONFIG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b.toString()});
 }
+async function enviarSP(maq,n,comando){return enviarStatus('sp',maq,n,comando)}
 let spPressTimer=null,spPressAtivo=false;
 function iniciarPressSP(maq){spPressAtivo=false;clearTimeout(spPressTimer);spPressTimer=setTimeout(()=>{spPressAtivo=true;abrirEscolhaSP(maq)},1800)}
 function cancelarPressSP(){clearTimeout(spPressTimer)}
 function bloquearClickAposSP(e){if(spPressAtivo){e.preventDefault();e.stopPropagation();spPressAtivo=false}}
-let spModalMaq='',spModalTurno=0;
+let spModalMaq='',spModalTurno=0,spModalTipo='';
 function abrirEscolhaSP(maq){
-  spModalMaq=String(maq);spModalTurno=0;
+  spModalMaq=String(maq);spModalTurno=0;spModalTipo='';
   document.getElementById('spModalTitulo').textContent=`Máquina ${spModalMaq}`;
+  document.getElementById('spModalSub').textContent='Status da produção';
   document.getElementById('spModalStatus').style.display='none';
-  document.querySelectorAll('.sp-shift').forEach(b=>b.classList.remove('ativa'));
+  document.querySelectorAll('.sp-shift,.status-tipo button').forEach(b=>b.classList.remove('ativa'));
   const bt=document.getElementById('spModalConfirmar');bt.textContent='CONFIRMAR';bt.classList.remove('retirar');bt.disabled=true;
   document.getElementById('spModalBg').style.display='flex';
 }
-function fecharModalSP(){document.getElementById('spModalBg').style.display='none';spModalMaq='';spModalTurno=0}
+function fecharModalSP(){document.getElementById('spModalBg').style.display='none';spModalMaq='';spModalTurno=0;spModalTipo=''}
+function selecionarTipoStatus(tipo){
+  spModalTipo=tipo;spModalTurno=0;
+  document.querySelectorAll('.status-tipo button').forEach(b=>b.classList.toggle('ativa',b.dataset.tipo===tipo));
+  document.querySelectorAll('.sp-shift').forEach(b=>b.classList.remove('ativa'));
+  document.getElementById('spModalSub').textContent=tipo==='sp'?'Sem Programação':'Produção Finalizada / Parada';
+  const bt=document.getElementById('spModalConfirmar');bt.disabled=true;bt.textContent='CONFIRMAR';bt.classList.remove('retirar');
+  const st=document.getElementById('spModalStatus');st.style.display='block';st.textContent=tipo==='sp'?'Agora selecione o turno que ficará como SP.':'Selecione o turno. PF preserva as inspeções já realizadas.';
+}
 function selecionarTurnoSP(n){
+  if(!spModalTipo){const st=document.getElementById('spModalStatus');st.style.display='block';st.textContent='Primeiro escolha SP ou PF.';return}
   spModalTurno=n;document.querySelectorAll('.sp-shift').forEach(b=>b.classList.toggle('ativa',Number(b.dataset.turno)===n));
-  const ja=temSP(turnosData.value,turnosLinha.value,spModalMaq,n),bt=document.getElementById('spModalConfirmar');
-  bt.disabled=false;bt.textContent=ja?'RETIRAR SP':'CONFIRMAR SP';bt.classList.toggle('retirar',ja);
-  const st=document.getElementById('spModalStatus');st.style.display='block';st.textContent=ja?`Este turno já está como SP. Toque em RETIRAR SP para liberar.`:`Máquina ${spModalMaq} • ${n}º turno será marcada como SP.`;
+  const tipo=spModalTipo,ja=tipo==='sp'?temSP(turnosData.value,turnosLinha.value,spModalMaq,n):temPF(turnosData.value,turnosLinha.value,spModalMaq,n);
+  const regs=turnosRegistros.filter(r=>r.maquina===spModalMaq&&emTurno(r.data,turnosData.value,n));
+  const bt=document.getElementById('spModalConfirmar'),st=document.getElementById('spModalStatus');st.style.display='block';
+  if(tipo==='pf'&&!ja&&regs.length===0){bt.disabled=true;bt.textContent='PF REQUER INSPEÇÃO';bt.classList.remove('retirar');st.textContent=`Máquina ${spModalMaq} • ${n}º turno ainda não possui inspeção. PF só pode fechar uma produção que já foi inspecionada.`;return}
+  bt.disabled=false;bt.textContent=ja?`RETIRAR ${tipo.toUpperCase()}`:`CONFIRMAR ${tipo.toUpperCase()}`;bt.classList.toggle('retirar',ja);
+  st.textContent=ja?`Este turno já está como ${tipo.toUpperCase()}. Toque em RETIRAR ${tipo.toUpperCase()} para reabrir.`:tipo==='sp'?`Máquina ${spModalMaq} • ${n}º turno será marcada como SP.`:`Máquina ${spModalMaq} • ${n}º turno será encerrada como PF, mantendo ${regs.length} inspeção(ões).`;
 }
 async function confirmarModalSP(){
-  if(!spModalMaq||!spModalTurno)return;
-  const maq=spModalMaq,n=spModalTurno,ja=temSP(turnosData.value,turnosLinha.value,maq,n),bt=document.getElementById('spModalConfirmar');
-  bt.disabled=true;bt.textContent=ja?'RETIRANDO...':'MARCANDO...';turnosStatus.textContent=ja?'Retirando SP...':'Marcando SP...';
+  if(!spModalMaq||!spModalTurno||!spModalTipo)return;
+  const maq=spModalMaq,n=spModalTurno,tipo=spModalTipo,ja=tipo==='sp'?temSP(turnosData.value,turnosLinha.value,maq,n):temPF(turnosData.value,turnosLinha.value,maq,n),bt=document.getElementById('spModalConfirmar');
+  bt.disabled=true;bt.textContent=ja?'RETIRANDO...':'MARCANDO...';turnosStatus.textContent=`${ja?'Retirando':'Marcando'} ${tipo.toUpperCase()}...`;
   try{
-    await enviarSP(maq,n,ja?'retirar':'marcar');
-    const d=dataISOparaBR(turnosData.value),lin=turnosLinha.value;
-    turnosSP=turnosSP.filter(x=>!(x.data===d&&x.linha===lin&&x.maquina===String(maq)&&turnoSPKey(x.turno)===String(n)));
-    if(!ja)turnosSP.push({data:d,turno:String(n),linha:lin,maquina:String(maq),status:'SP'});
+    await enviarStatus(tipo,maq,n,ja?'retirar':'marcar');
+    const d=dataISOparaBR(turnosData.value),lin=turnosLinha.value,arr=tipo==='sp'?turnosSP:turnosPF;
+    const novo=arr.filter(x=>!(x.data===d&&x.linha===lin&&x.maquina===String(maq)&&turnoStatusKey(x.turno)===String(n)));
+    if(!ja)novo.push({data:d,turno:String(n),linha:lin,maquina:String(maq),status:tipo.toUpperCase()});
+    if(tipo==='sp')turnosSP=novo;else turnosPF=novo;
     fecharModalSP();await carregarPainelTurnos(true);
-    turnosStatus.textContent=`✓ Máquina ${maq}: SP ${ja?'retirado':'marcado'} no ${n}º turno.`;
-  }catch(e){bt.disabled=false;bt.textContent=ja?'RETIRAR SP':'CONFIRMAR SP';turnosStatus.textContent='Erro ao atualizar SP: '+e.message}
+    turnosStatus.textContent=`✓ Máquina ${maq}: ${tipo.toUpperCase()} ${ja?'retirado':'marcado'} no ${n}º turno.`;
+  }catch(e){bt.disabled=false;bt.textContent=ja?`RETIRAR ${tipo.toUpperCase()}`:`CONFIRMAR ${tipo.toUpperCase()}`;turnosStatus.textContent=`Erro ao atualizar ${tipo.toUpperCase()}: `+e.message}
 }
-async function carregarPainelTurnos(manterSPLocal=false){
+async function carregarPainelTurnos(manterStatusLocal=false){
   const data=turnosData.value,lin=turnosLinha.value;if(!data||!lin)return;
   turnosStatus.textContent='Carregando inspeções...';turnosTabela.innerHTML='';turnosDetalhe.style.display='none';
   try{
-    if(!manterSPLocal)await carregarSP();
+    if(!manterStatusLocal)await Promise.all([carregarSP(),carregarPF()]);
     const resp=await fetch(CSV_URL,{cache:'no-store'});if(!resp.ok)throw Error('Planilha indisponível');
     let a=parseCSV(await resp.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
     const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']);
     const val=(r,i)=>i>=0?(r[i]??''):'';
     turnosRegistros=a.map(r=>({data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D)),dataTxt:String(val(r,DC)).trim()||val(r,D),maquina:String(val(r,M)).trim(),op:val(r,O),item:val(r,I),tipo:val(r,T),volante:val(r,V),situacao:val(r,SI)})).filter(x=>x.data);
-    const maquinas=MAQUINAS[lin]||[];let com=0;
-    const limparAutomatico=[];
-    const linhas=maquinas.map(maq=>{let cs=[];for(let n=1;n<=3;n++){const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));let sp=temSP(data,lin,maq,n);if(regs.length&&sp){sp=false;limparAutomatico.push([maq,n])}if(regs.length)com++;const cls=sp?'turnos-sp':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok';cs.push(`<td class="turnos-cell ${cls}" onclick="abrirDetalheTurno('${escJS(maq)}',${n})">${sp?'SP':regs.length}</td>`)}return `<tr><td class="turnos-maq" title="Segure para marcar SP" onpointerdown="iniciarPressSP('${escJS(maq)}')" onpointerup="cancelarPressSP()" onpointercancel="cancelarPressSP()" onpointerleave="cancelarPressSP()" onclick="bloquearClickAposSP(event)">${esc(maq)}</td>${cs.join('')}</tr>`}).join('');
-    limparAutomatico.forEach(([maq,n])=>enviarSP(maq,n,'retirar').catch(()=>{}));
-    const maquinasCom=new Set();maquinas.forEach(maq=>{for(let n=1;n<=3;n++)if(turnosRegistros.some(r=>r.maquina===maq&&emTurno(r.data,data,n)))maquinasCom.add(maq)});
-    const maquinasSP=new Set();maquinas.forEach(maq=>{for(let n=1;n<=3;n++)if(temSP(data,lin,maq,n)&&!turnosRegistros.some(r=>r.maquina===maq&&emTurno(r.data,data,n)))maquinasSP.add(maq)});
-    const maquinasSem=maquinas.filter(maq=>!maquinasCom.has(maq)&&!maquinasSP.has(maq)).length;
-    turnosMaqTotal.textContent=maquinas.length;turnosInspec.textContent=maquinasCom.size;turnosSPTotal.textContent=maquinasSP.size;turnosSem.textContent=maquinasSem;turnosResumo.style.display='grid';
+    const maquinas=MAQUINAS[lin]||[],limparAutomatico=[];
+    const linhas=maquinas.map(maq=>{let cs=[];for(let n=1;n<=3;n++){const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));let sp=temSP(data,lin,maq,n),pf=temPF(data,lin,maq,n);if(regs.length&&sp){sp=false;limparAutomatico.push([maq,n])}const cls=sp?'turnos-sp':pf?'turnos-pf':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok';const txt=sp?'SP':pf?`${regs.length} PF`:regs.length;cs.push(`<td class="turnos-cell ${cls}" onclick="abrirDetalheTurno('${escJS(maq)}',${n})">${txt}</td>`)}return `<tr><td class="turnos-maq" title="Segure para SP ou PF" onpointerdown="iniciarPressSP('${escJS(maq)}')" onpointerup="cancelarPressSP()" onpointercancel="cancelarPressSP()" onpointerleave="cancelarPressSP()" onclick="bloquearClickAposSP(event)">${esc(maq)}</td>${cs.join('')}</tr>`}).join('');
+    if(limparAutomatico.length){const d=dataISOparaBR(data);limparAutomatico.forEach(([maq,n])=>{turnosSP=turnosSP.filter(x=>!(x.data===d&&x.linha===lin&&x.maquina===String(maq)&&turnoStatusKey(x.turno)===String(n)));enviarSP(maq,n,'retirar').catch(()=>{})})}
+    const maquinasCom=new Set(turnosRegistros.filter(r=>r.maquina&&[1,2,3].some(n=>emTurno(r.data,data,n))).map(r=>r.maquina));
+    const maquinasSP=new Set(),maquinasPF=new Set();maquinas.forEach(maq=>{for(let n=1;n<=3;n++){if(temSP(data,lin,maq,n)&&!turnosRegistros.some(r=>r.maquina===maq&&emTurno(r.data,data,n)))maquinasSP.add(maq);if(temPF(data,lin,maq,n))maquinasPF.add(maq)}});
+    const maquinasSem=maquinas.filter(maq=>!maquinasCom.has(maq)&&!maquinasSP.has(maq)&&!maquinasPF.has(maq)).length;
+    turnosMaqTotal.textContent=maquinas.length;turnosInspec.textContent=maquinasCom.size;turnosSPTotal.textContent=maquinasSP.size;turnosPFTotal.textContent=maquinasPF.size;turnosSem.textContent=maquinasSem;turnosResumo.style.display='grid';
     turnosTabela.innerHTML=`<table class="turnos-table"><thead><tr><th>Máq.</th><th>1º<br>06:00</th><th>2º<br>13:50</th><th>3º<br>21:50</th></tr></thead><tbody>${linhas}</tbody></table>`;
-    turnosStatus.textContent=`${lin} • ${data.split('-').reverse().join('/')} • toque na quantidade para ver registros • segure a máquina para SP.`;
+    turnosStatus.textContent=`${lin} • ${data.split('-').reverse().join('/')} • toque na quantidade para ver registros • segure a máquina para SP/PF.`;
   }catch(e){turnosStatus.textContent='Erro: '+e.message}
 }
 function abrirDetalheTurno(maq,n){
