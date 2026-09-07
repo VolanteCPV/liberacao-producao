@@ -86,7 +86,35 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .sp-handle{width:70px;height:6px;border-radius:99px;background:#64748b;margin:0 auto 18px}.sp-title{font-size:28px;font-weight:900;margin:0}.sp-sub{font-size:18px;color:#94a3b8;margin:3px 0 18px}.sp-label{font-size:17px;font-weight:800;margin:10px 0}.sp-shifts{display:grid;gap:10px}.sp-shift{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:12px;width:100%;text-align:left;background:#0f141b;border:2px solid #475569;border-radius:16px;padding:12px;color:#f8fafc;margin:0}.sp-shift.ativa{border-color:#3b82f6;background:#172033}.sp-num{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#2563eb;font-size:25px;font-weight:900}.sp-shift strong{font-size:18px;display:block}.sp-shift span{color:#b9c6d8;font-size:16px}.sp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.sp-actions button{margin:0}.sp-confirmar{background:#2563eb}.sp-confirmar.retirar{background:#dc2626}
 .status-tipo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}.status-tipo button{background:#0f141b;border:1px solid #475569;color:#e5e7eb;padding:12px 8px;border-radius:12px;font-weight:800}.status-tipo button.ativa{border-color:#60a5fa;background:#172554;color:#dbeafe}
 @media(min-width:600px){.sp-modal-bg{align-items:center}}
-</style></head><body><div class="card" id="areaComum">
+</style>
+<style>
+.btn-cadastrar-desvio{
+  width:100%;margin-top:16px;padding:17px 14px;border:0;border-radius:14px;
+  background:#76c7e8;color:#08202b;font-size:18px;font-weight:800;cursor:pointer;
+}
+.desvio-modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;
+  align-items:center;justify-content:center;padding:18px;
+}
+.desvio-modal{
+  width:min(520px,100%);max-height:90vh;overflow:auto;background:#131b24;
+  border:1px solid #33465a;border-radius:18px;padding:20px;color:#fff;
+}
+.desvio-modal h2{margin:0 0 16px}
+.desvio-modal label{display:block;margin:13px 0 6px;font-weight:700}
+.desvio-modal input,.desvio-modal textarea{
+  width:100%;box-sizing:border-box;background:#0e151d;color:#fff;border:1px solid #3a4d61;
+  border-radius:12px;padding:13px;font-size:16px;
+}
+.desvio-modal textarea{min-height:100px;resize:vertical}
+.desvio-modal .dados-qr{background:#0e151d;border:1px solid #33465a;border-radius:12px;padding:12px;line-height:1.6}
+.desvio-modal .acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.desvio-modal .salvar{background:#178b43;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:16px}
+.desvio-modal .cancelar{background:#52657b;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:16px}
+#msgCadastroDesvio{margin-top:12px;padding:10px;border-radius:10px;display:none}
+</style>
+
+</head><body><div class="card" id="areaComum">
 <h1 id="tituloApp">Liberação de Produção</h1><div class="sub">NIIMBOT B1 • 50 × 30 mm • QR Forms</div>
 <button class="green" type="button" onclick="conectarB1()">CONECTAR B1</button><div class="status" id="status">B1 ainda não conectada.</div><div class="fila-status" id="filaStatus">✓ Nenhuma inspeção pendente.</div>
 <form onsubmit="gerar(event)"><label>Item</label><input id="item" inputmode="numeric" required placeholder="Ex.: 869"><label>OP</label><input id="op" inputmode="numeric" required placeholder="Ex.: 577110"><label id="gatilhoTurnos">Linha</label><select id="linha" required onchange="atualizarMaquinas()"><option value="">Selecione a linha</option><option>Linha 1</option><option>Linha 2</option><option>Linha 3</option><option>Linha 4</option><option>Linha 5</option><option>LSR</option></select><label>Máquina</label><select id="maquina" required disabled><option value="">Primeiro selecione a linha</option></select><label>Setor</label><select id="setor" required><option value="">Selecione o setor</option><option>Vulcanização</option><option>Inspeção</option><option>LSR</option><option>Corte</option></select><button type="submit">GERAR ETIQUETA + QR</button><button class="gray" type="button" onclick="novoQR()">LIMPAR / NOVA ETIQUETA</button></form>
@@ -124,7 +152,8 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <div class="situacoes" id="opcoesSituacao"></div>
   <label>Informações <span class="small">(opcional)</span></label>
   <textarea id="inspInfo" placeholder="Observações adicionais"></textarea>
-  <button class="green" id="btnEnviarInspecao" type="button" onclick="enviarInspecao()">ENVIAR INSPEÇÃO</button>
+  <button type="button" class="btn-cadastrar-desvio" id="btnCadastrarDesvio">CADASTRAR DESVIO</button>
+<button class="green" id="btnEnviarInspecao" type="button" onclick="enviarInspecao()">ENVIAR INSPEÇÃO</button>
   <button class="gray" type="button" onclick="cancelarInspecao()">CANCELAR / LER OUTRO QR</button>
   <div class="status" id="statusInspecao">Preencha os campos obrigatórios.</div>
 </div>
@@ -1019,4 +1048,127 @@ function sairAdmin(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-</script></body></html>
+</script>
+<div class="desvio-modal-bg" id="modalCadastroDesvio">
+  <div class="desvio-modal">
+    <h2>CADASTRAR DESVIO</h2>
+    <div class="dados-qr" id="dadosQrDesvio"></div>
+
+    <label for="desvioNumero">Nº do desvio *</label>
+    <input id="desvioNumero" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Digite 12326 → 123/26" autocomplete="off">
+
+    <label for="desvioValidade">Validade *</label>
+    <input id="desvioValidade" type="date">
+
+    <label for="desvioDescricao">Descrição / motivo *</label>
+    <textarea id="desvioDescricao" placeholder="Descreva o motivo do desvio"></textarea>
+
+    <label for="desvioResponsavel">Responsável *</label>
+    <input id="desvioResponsavel" placeholder="Nome de quem abriu/autorizou o desvio" autocomplete="off">
+
+    <label>Cadastrado por</label>
+    <div class="dados-qr" id="desvioCadastradoPor">Selecione o volante responsável na inspeção.</div>
+
+    <div id="msgCadastroDesvio"></div>
+    <div class="acoes">
+      <button type="button" class="cancelar" id="cancelarCadastroDesvio">CANCELAR</button>
+      <button type="button" class="salvar" id="salvarCadastroDesvio">SALVAR DESVIO</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  function textoCampo(rotulo){
+    const els=[...document.querySelectorAll("body *")];
+    const lab=els.find(e=>e.children.length===0 && e.textContent.trim().toUpperCase()===rotulo);
+    if(!lab) return "";
+    const box=lab.parentElement;
+    if(!box) return "";
+    const txt=box.innerText.split(/\n/).map(x=>x.trim()).filter(Boolean);
+    return txt.length>1?txt[txt.length-1]:"";
+  }
+  function dadosAtuais(){
+    // Usa diretamente os dados já validados pelo QR na inspeção.
+    // Evita capturar textos de outros elementos da página.
+    if (typeof inspDados === "object" && inspDados) {
+      return {
+        maquina: String(inspDados.maquina || "").trim(),
+        op: String(inspDados.op || "").trim(),
+        item: String(inspDados.item || "").trim()
+      };
+    }
+    return {maquina:"", op:"", item:""};
+  }
+  function msg(t,ok){
+    const e=$("msgCadastroDesvio");
+    e.style.display="block";
+    e.style.background=ok?"#123d25":"#4b1f22";
+    e.textContent=t;
+  }
+  // Padroniza automaticamente o número: 00126 -> 001/26
+  $("desvioNumero").addEventListener("input",()=>{
+    const el=$("desvioNumero");
+    const digitos=el.value.replace(/\D/g,"").slice(0,5);
+    el.value=digitos.length>3?digitos.slice(0,3)+"/"+digitos.slice(3):digitos;
+  });
+  $("btnCadastrarDesvio").addEventListener("click",()=>{
+    const d=dadosAtuais();
+    if(!d.item){ alert("Leia um QR antes de cadastrar o desvio."); return; }
+    if(!inspVolante){ alert("Selecione o volante responsável antes de cadastrar o desvio."); return; }
+    $("dadosQrDesvio").innerHTML=
+      "<b>Item:</b> "+d.item+" &nbsp; • &nbsp; <b>Máquina:</b> "+(d.maquina||"-")+
+      " &nbsp; • &nbsp; <b>OP:</b> "+(d.op||"-");
+    $("desvioCadastradoPor").innerHTML="<b>"+String(inspVolante)+"</b>";
+    $("msgCadastroDesvio").style.display="none";
+    $("modalCadastroDesvio").style.display="flex";
+  });
+  $("cancelarCadastroDesvio").addEventListener("click",()=>{
+    $("modalCadastroDesvio").style.display="none";
+  });
+  $("salvarCadastroDesvio").addEventListener("click",async()=>{
+    const d=dadosAtuais();
+    const numero=$("desvioNumero").value.trim();
+    if(!/^\d{3}\/\d{2}$/.test(numero)){
+      msg("Informe o Nº do desvio com 5 dígitos. Ex.: 00126 vira 001/26.",false); return;
+    }
+    const validadeIso=$("desvioValidade").value;
+    const descricao=$("desvioDescricao").value.trim();
+    const responsavel=$("desvioResponsavel").value.trim();
+    const cadastradoPor=String(inspVolante||"").trim();
+    if(!cadastradoPor){
+      msg("Selecione o volante responsável na inspeção antes de cadastrar o desvio.",false); return;
+    }
+    if(!numero||!validadeIso||!descricao||!responsavel){
+      msg("Preencha Nº do desvio, validade, descrição e responsável.",false); return;
+    }
+    const [a,m,dia]=validadeIso.split("-");
+    const validade=`${dia}/${m}/${a}`;
+    const btn=$("salvarCadastroDesvio");
+    btn.disabled=true; btn.textContent="SALVANDO...";
+    try{
+      const body=new URLSearchParams({
+        acao:"cadastrarDesvio",numero,item:d.item,maquina:d.maquina,op:d.op,
+        validade,descricao,responsavel,cadastradoPor
+      });
+      await fetch(CONFIG_URL,{method:"POST",mode:"no-cors",
+        headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body});
+      msg("Desvio enviado. Aguarde a gravação e confira o alerta.",true);
+      setTimeout(async()=>{
+        try{
+          await verificarDesviosItem(d);
+          $("modalCadastroDesvio").style.display="none";
+        }catch(e){}
+      },1400);
+    }catch(e){
+      msg("Não foi possível enviar o desvio.",false);
+    }finally{
+      btn.disabled=false; btn.textContent="SALVAR DESVIO";
+    }
+  });
+})();
+</script>
+
+</body></html>
