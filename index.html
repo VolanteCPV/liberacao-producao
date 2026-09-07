@@ -466,12 +466,20 @@ async function tentarEnviarItemFila(item,{aguardar=true}={}){
   // Se já houve tentativa, primeiro consulta a planilha. Isso evita reenviar algo que
   // chegou ao Google mas demorou para aparecer no CSV publicado.
   if(item.tentado){
-    try{if(await contarRegistrosIguais(item.dados)>Number(item.baseline||0)){removerDaFila(item.id);return 'confirmado'}}catch(e){return 'offline'}
+    // REGRA V18.1: depois que um POST foi disparado, nunca o dispara automaticamente de novo.
+    // Enquanto o CSV publicado ainda não refletir a gravação, apenas aguardamos/consultamos.
+    // Isso elimina a duplicidade causada pelo atraso de atualização do CSV.
+    try{
+      if(await contarRegistrosIguais(item.dados)>Number(item.baseline||0)){
+        removerDaFila(item.id);return 'confirmado';
+      }
+      return 'pendente';
+    }catch(e){return 'offline'}
   }else{
     try{item.baseline=await contarRegistrosIguais(item.dados)}catch(e){return 'offline'}
   }
   try{
-    const b=new URLSearchParams({acao:'inspecao',...item.dados});
+    const b=new URLSearchParams({acao:'inspecao',idInspecao:item.id,...item.dados});
     await fetch(CONFIG_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b.toString()});
     item.tentado=true;item.ultimaTentativa=Date.now();
     const f=lerFila(),i=f.findIndex(x=>x.id===item.id);if(i>=0){f[i]=item;salvarFila(f)}
@@ -488,8 +496,8 @@ async function sincronizarFila(){
       const atual=lerFila().find(x=>x.id===item.id);if(!atual)continue;
       const r=await tentarEnviarItemFila(atual,{aguardar:false});
       if(r==='offline')break;
-      // Itens já tentados nunca são POSTados novamente nesta passagem; na próxima
-      // sincronização a planilha é consultada primeiro, protegendo contra duplicidade.
+      // V18.1: item já tentado fica somente em confirmação; não há novo POST automático.
+      // O idInspecao também já é enviado para permitir idempotência no servidor futuramente.
     }
   }finally{sincronizandoFila=false;atualizarStatusFila()}
 }
