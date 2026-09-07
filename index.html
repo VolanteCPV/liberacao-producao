@@ -164,7 +164,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
     <div class="chart-card"><h3>Registros por setor</h3><div class="chart-wrap"><canvas id="grafSetores"></canvas></div></div>
     <div class="chart-card"><h3>Tipos de atividade</h3><div class="chart-wrap"><canvas id="grafTipos"></canvas></div></div>
     <div class="chart-card"><h3>Top 10 problemas encontrados</h3><div class="chart-wrap"><canvas id="grafDefeitos"></canvas></div><ol class="rank" id="rankDefeitos"></ol></div>
-    <div class="chart-card" id="cardRankItens"><h3>🏆 Top 10 itens com mais inspeções NOK</h3><div class="meta">Toque em um item para ver quais problemas mais ocorreram.</div><ol class="rank-itens" id="rankItensNOK"></ol></div>
+    <div class="chart-card" id="cardRankItens"><h3>🏆 Top 10 itens NOK</h3><div class="meta">Toque em um item para ver quais problemas mais ocorreram.</div><ol class="rank-itens" id="rankItensNOK"></ol></div>
     <div class="detalhe-item" id="detalheItemNOK"><h3 id="detalheItemTitulo">Item</h3><div class="meta" id="detalheItemPeriodo"></div><div class="detalhe-kpis"><div><strong id="detTotal">0</strong><span>Inspeções</span></div><div><strong id="detNOK">0</strong><span>Com problema</span></div><div><strong id="detPct">0%</strong><span>% NOK</span></div></div><h3>Ranking dos problemas</h3><ol class="rank" id="rankProblemasItem"></ol><button class="detalhe-voltar" type="button" onclick="fecharDetalheItem()">← VOLTAR AO RELATÓRIO</button></div>
     <div class="report-actions">
       <button class="green" type="button" onclick="window.print()">🖨️ IMPRIMIR / PDF</button>
@@ -642,7 +642,7 @@ async function gerarRelatorio(){
     });
     periodoRankingItens=periodoTexto.textContent;
     const topItens=Object.entries(dadosRankingItens).filter(([,d])=>d.nok>0).sort((a,b)=>b[1].nok-a[1].nok||String(a[0]).localeCompare(String(b[0]))).slice(0,10);
-    rankItensNOK.innerHTML=topItens.length?topItens.map(([item,d],i)=>`<li><button class="rank-item-btn" type="button" onclick="abrirDetalheItem('${'${'}escJS(item)}')"><span><strong>${'${'}i+1}º • Item ${'${'}esc(item)}</strong></span><span>${'${'}d.nok} NOK</span></button></li>`).join(''):'<li class="meta">Nenhum item com problema no período.</li>';
+    rankItensNOK.innerHTML=topItens.length?topItens.map(([item,d],i)=>`<li><button class="rank-item-btn" type="button" onclick="abrirDetalheItem('${escJS(item)}')"><span><strong>${i+1}º • Item ${esc(item)}</strong></span><span>${d.nok} NOK</span></button></li>`).join(''):'<li class="meta">Nenhum item com problema no período.</li>';
     detalheItemNOK.style.display='none';
     cardRankItens.style.display='block';
 
