@@ -548,18 +548,21 @@ function atualizarStatusFila(msg=''){
   el.className='fila-status '+(n?'pendente':'ok');
   el.innerHTML=n?`⏳ <strong>${n} inspeção(ões) pendente(s)</strong>${msg?'<br>'+esc(msg):'<br>Envio automático quando a conexão estiver disponível.'}`:'✓ Nenhuma inspeção pendente.';
 }
-async function contarRegistrosIguais(d){
+async function confirmarIdInspecao(id){
+  if(!id)return false;
   const x=await fetch(csvAtualizado(CSV_URL),{cache:'no-store'});if(!x.ok)throw Error('Planilha indisponível');
-  const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
-  const M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Informações','Observações','Observacao']);
-  const val=(r,i)=>i>=0?(r[i]??''):'';
-  return a.filter(r=>norm(val(r,M))===norm(d.maquina)&&norm(val(r,O))===norm(d.op)&&norm(val(r,I))===norm(d.item)&&norm(val(r,T))===norm(d.tipo)&&norm(val(r,V))===norm(d.volante)&&norm(val(r,SI))===norm(d.situacoes)&&norm(val(r,OB))===norm(d.informacoes)).length;
+  const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));
+  if(!a.length)return false;
+  const h=a.shift();
+  const ID=col(h,['ID Inspeção','ID Inspecao','idInspecao']);
+  if(ID<0)throw Error('Coluna ID Inspeção não encontrada');
+  return a.some(r=>norm(r[ID]??'')===norm(id));
 }
 async function confirmarItemFila(item,limiteMs=18000){
   const inicio=Date.now();
   while(Date.now()-inicio<limiteMs){
     await new Promise(r=>setTimeout(r,1800));
-    try{if(await contarRegistrosIguais(item.dados)>Number(item.baseline||0))return true}catch(e){}
+    try{if(await confirmarIdInspecao(item.id))return true}catch(e){}
   }
   return false;
 }
@@ -572,13 +575,11 @@ async function tentarEnviarItemFila(item,{aguardar=true}={}){
     // Enquanto o CSV publicado ainda não refletir a gravação, apenas aguardamos/consultamos.
     // Isso elimina a duplicidade causada pelo atraso de atualização do CSV.
     try{
-      if(await contarRegistrosIguais(item.dados)>Number(item.baseline||0)){
+      if(await confirmarIdInspecao(item.id)){
         removerDaFila(item.id);return 'confirmado';
       }
       return 'pendente';
     }catch(e){return 'offline'}
-  }else{
-    try{item.baseline=await contarRegistrosIguais(item.dados)}catch(e){return 'offline'}
   }
   try{
     const b=new URLSearchParams({acao:'inspecao',idInspecao:item.id,...item.dados});
