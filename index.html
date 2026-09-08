@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V18.7.5 Oficial</title>
+<title>Liberação de Produção V18.7.5 Oficial - OP corrigida</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -544,7 +544,7 @@ function atualizarStatusFila(msg=''){
 async function contarRegistrosIguais(d){
   const x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Planilha indisponível');
   const a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
-  const M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Informações','Observações','Observacao']);
+  const M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Informações','Observações','Observacao']);
   const val=(r,i)=>i>=0?(r[i]??''):'';
   return a.filter(r=>norm(val(r,M))===norm(d.maquina)&&norm(val(r,O))===norm(d.op)&&norm(val(r,I))===norm(d.item)&&norm(val(r,T))===norm(d.tipo)&&norm(val(r,V))===norm(d.volante)&&norm(val(r,SI))===norm(d.situacoes)&&norm(val(r,OB))===norm(d.informacoes)).length;
 }
@@ -811,7 +811,7 @@ async function carregarPainelTurnos(manterStatusLocal=false){
     if(!manterStatusLocal)await Promise.all([carregarSP(),carregarPF()]);
     const resp=await fetch(CSV_URL,{cache:'no-store'});if(!resp.ok)throw Error('Planilha indisponível');
     let a=parseCSV(await resp.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
-    const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']);
+    const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']);
     const val=(r,i)=>i>=0?(r[i]??''):'';
     turnosRegistros=a.map(r=>({data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D)),dataTxt:String(val(r,DC)).trim()||val(r,D),maquina:String(val(r,M)).trim(),op:val(r,O),item:val(r,I),tipo:val(r,T),volante:val(r,V),situacao:val(r,SI)})).filter(x=>x.data);
     const maquinas=MAQUINAS[lin]||[],limparAutomatico=[];
@@ -859,7 +859,7 @@ async function buscarAdmin(){
  adminResultado.innerHTML='<div class="status">Localizando...</div>';
  try{
   const x=await fetch(CSV_URL,{cache:'no-store'}),a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim())),h=a.shift();
-  const D=col(h,['Carimbo de data/hora','Data']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),v=(r,i)=>i>=0?(r[i]??''):'';
+  const D=col(h,['Carimbo de data/hora','Data']),M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),v=(r,i)=>i>=0?(r[i]??''):'';
   const z=a.map((r,i)=>({r,linha:i+2})).filter(x=>(!opv||norm(v(x.r,O))===norm(opv))&&(!itv||norm(v(x.r,I))===norm(itv))&&(!mqv||norm(v(x.r,M))===norm(mqv))).reverse()[0];
   if(!z){adminResultado.innerHTML='<div class="status">Nenhum registro encontrado.</div>';return}
   adminRegistro={linha:z.linha,original:v(z.r,D),op:v(z.r,O),item:v(z.r,I),maquina:v(z.r,M)};
@@ -890,7 +890,7 @@ function norm(s){return String(s??'').trim().toLowerCase().normalize('NFD').repl
 function col(h,n){let x=h.map(norm);for(let z of n){let i=x.findIndex(v=>v===norm(z));if(i>=0)return i}for(let z of n){let i=x.findIndex(v=>v.startsWith(norm(z)));if(i>=0)return i}return -1}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function iso(v){let m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:''}
-async function consultarProducao(){statusConsulta.textContent='Consultando planilha...';listaConsulta.innerHTML='';try{let x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Não foi possível acessar a planilha.');let a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));let h=a.shift();let D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['OP']),I=col(h,['Item']),S=col(h,['Setor']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Observações','Observacao']);let v=(r,i)=>i>=0?(r[i]??''):'';let dataEfetiva=r=>String(v(r,DC)).trim()||v(r,D);let z=a.filter(r=>(!qop.value||norm(v(r,O)).includes(norm(qop.value)))&&(!qitem.value||norm(v(r,I)).includes(norm(qitem.value)))&&(!qmaq.value||norm(v(r,M)).includes(norm(qmaq.value)))&&(!qdata.value||iso(dataEfetiva(r))===qdata.value)).reverse();statusConsulta.textContent=z.length?z.length+' registro(s) encontrado(s).':'Nenhum registro encontrado.';listaConsulta.innerHTML=z.slice(0,100).map(r=>`<div class="result-card"><strong>OP ${esc(v(r,O)||'-')}</strong> • Item ${esc(v(r,I)||'-')} • Máquina ${esc(v(r,M)||'-')}<div class="meta">${esc(dataEfetiva(r))}${v(r,DC)?' <strong>(corrigida)</strong>':''}${v(r,S)?' • '+esc(v(r,S)):''}</div>${v(r,T)?'<div><strong>Tipo:</strong> '+esc(v(r,T))+'</div>':''}${v(r,V)?'<div><strong>Volante:</strong> '+esc(v(r,V))+'</div>':''}${v(r,SI)?'<div><strong>Situação:</strong> '+esc(v(r,SI))+'</div>':''}${v(r,OB)?'<div><strong>Observações:</strong> '+esc(v(r,OB))+'</div>':''}</div>`).join('')}catch(e){statusConsulta.textContent='Erro na consulta: '+e.message}}
+async function consultarProducao(){statusConsulta.textContent='Consultando planilha...';listaConsulta.innerHTML='';try{let x=await fetch(CSV_URL,{cache:'no-store'});if(!x.ok)throw Error('Não foi possível acessar a planilha.');let a=parseCSV(await x.text()).filter(r=>r.some(v=>String(v).trim()));let h=a.shift();let D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),S=col(h,['Setor']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']),OB=col(h,['Observações','Observacao']);let v=(r,i)=>i>=0?(r[i]??''):'';let dataEfetiva=r=>String(v(r,DC)).trim()||v(r,D);let z=a.filter(r=>(!qop.value||norm(v(r,O)).includes(norm(qop.value)))&&(!qitem.value||norm(v(r,I)).includes(norm(qitem.value)))&&(!qmaq.value||norm(v(r,M)).includes(norm(qmaq.value)))&&(!qdata.value||iso(dataEfetiva(r))===qdata.value)).reverse();statusConsulta.textContent=z.length?z.length+' registro(s) encontrado(s).':'Nenhum registro encontrado.';listaConsulta.innerHTML=z.slice(0,100).map(r=>`<div class="result-card"><strong>OP ${esc(v(r,O)||'-')}</strong> • Item ${esc(v(r,I)||'-')} • Máquina ${esc(v(r,M)||'-')}<div class="meta">${esc(dataEfetiva(r))}${v(r,DC)?' <strong>(corrigida)</strong>':''}${v(r,S)?' • '+esc(v(r,S)):''}</div>${v(r,T)?'<div><strong>Tipo:</strong> '+esc(v(r,T))+'</div>':''}${v(r,V)?'<div><strong>Volante:</strong> '+esc(v(r,V))+'</div>':''}${v(r,SI)?'<div><strong>Situação:</strong> '+esc(v(r,SI))+'</div>':''}${v(r,OB)?'<div><strong>Observações:</strong> '+esc(v(r,OB))+'</div>':''}</div>`).join('')}catch(e){statusConsulta.textContent='Erro na consulta: '+e.message}}
 function limparConsulta(){qop.value='';qitem.value='';qmaq.value='';qdata.value='';listaConsulta.innerHTML='';statusConsulta.textContent='Informe um ou mais filtros e toque em PESQUISAR.'}
 
 let chartsRel={};
