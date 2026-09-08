@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V18.7.5 Oficial - OP corrigida</title>
+<title>Liberação de Produção V18.8 Oficial - Gerenciamento de Desvios</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -111,6 +111,12 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .desvio-modal .acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
 .desvio-modal .salvar{background:#178b43;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:16px}
 .desvio-modal .cancelar{background:#52657b;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:16px}
+.desvio-card .desvio-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.desvio-card .desvio-acao{border:0;border-radius:9px;padding:10px 8px;font-weight:800;font-size:13px;cursor:pointer}
+.desvio-card .revalidar{background:#2563eb;color:#fff}
+.desvio-card .encerrar{background:#b91c1c;color:#fff}
+.desvio-modal .numero-fixo{font-size:22px;font-weight:900;background:#0e151d;border:1px solid #33465a;border-radius:12px;padding:12px}
+
 #msgCadastroDesvio{margin-top:12px;padding:10px;border-radius:10px;display:none}
 </style>
 
@@ -679,12 +685,92 @@ async function verificarDesviosItem(d){
           ${x.op?` • OP: <b>${escDesvio(x.op)}</b>`:''}<br>
           Descrição: ${escDesvio(x.descricao||'-')}
         </span>
+        <div class="desvio-acoes">
+          <button type="button" class="desvio-acao revalidar" data-numero="${escDesvio(x.numero||'')}">REVALIDAR</button>
+          <button type="button" class="desvio-acao encerrar" data-numero="${escDesvio(x.numero||'')}">ENCERRAR</button>
+        </div>
       </div>`;
     }).join('');
     alertaDesvio.style.display='block';
+    alertaDesvioConteudo.querySelectorAll('.desvio-acao.revalidar').forEach(btn=>{
+      btn.addEventListener('click',()=>abrirRevalidacaoDesvio(btn.dataset.numero));
+    });
+    alertaDesvioConteudo.querySelectorAll('.desvio-acao.encerrar').forEach(btn=>{
+      btn.addEventListener('click',()=>encerrarDesvioUI(btn.dataset.numero));
+    });
     if(navigator.vibrate)navigator.vibrate([120,80,120]);
   }catch(e){
     console.warn('Não foi possível consultar desvios:',e);
+  }
+}
+
+
+let desvioGerenciadoNumero="";
+
+function msgGerenciarDesvio(t,ok){
+  const e=document.getElementById("msgGerenciarDesvio");
+  e.style.display="block";
+  e.style.marginTop="12px";
+  e.style.padding="10px";
+  e.style.borderRadius="10px";
+  e.style.background=ok?"#123d25":"#4b1f22";
+  e.textContent=t;
+}
+
+function abrirRevalidacaoDesvio(numero){
+  desvioGerenciadoNumero=String(numero||"").trim();
+  document.getElementById("gerDesvioNumero").textContent=desvioGerenciadoNumero||"-";
+  document.getElementById("gerDesvioValidade").value="";
+  document.getElementById("msgGerenciarDesvio").style.display="none";
+  document.getElementById("modalGerenciarDesvio").style.display="flex";
+}
+
+async function revalidarDesvioUI(){
+  const validadeIso=document.getElementById("gerDesvioValidade").value;
+  if(!desvioGerenciadoNumero||!validadeIso){
+    msgGerenciarDesvio("Selecione a nova validade.",false); return;
+  }
+  const [a,m,d]=validadeIso.split("-");
+  const validade=`${d}/${m}/${a}`;
+  const btn=document.getElementById("salvarRevalidacaoDesvio");
+  btn.disabled=true; btn.textContent="REVALIDANDO...";
+  try{
+    const body=new URLSearchParams({
+      acao:"revalidarDesvio",
+      numero:desvioGerenciadoNumero,
+      validade
+    });
+    await fetch(CONFIG_URL,{
+      method:"POST",mode:"no-cors",
+      headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+      body
+    });
+    msgGerenciarDesvio("Revalidação enviada. Confirmando...",true);
+    setTimeout(async()=>{
+      await verificarDesviosItem(inspDados);
+      document.getElementById("modalGerenciarDesvio").style.display="none";
+    },1400);
+  }catch(e){
+    msgGerenciarDesvio("Não foi possível revalidar o desvio.",false);
+  }finally{
+    btn.disabled=false; btn.textContent="REVALIDAR";
+  }
+}
+
+async function encerrarDesvioUI(numero){
+  numero=String(numero||"").trim();
+  if(!numero)return;
+  if(!confirm(`Encerrar o desvio ${numero}? Ele deixará de aparecer como desvio ativo.`))return;
+  try{
+    const body=new URLSearchParams({acao:"encerrarDesvio",numero});
+    await fetch(CONFIG_URL,{
+      method:"POST",mode:"no-cors",
+      headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+      body
+    });
+    setTimeout(async()=>{ await verificarDesviosItem(inspDados); },1400);
+  }catch(e){
+    alert("Não foi possível encerrar o desvio.");
   }
 }
 
@@ -1049,6 +1135,24 @@ function sairAdmin(){
 }
 
 </script>
+
+<div class="desvio-modal-bg" id="modalGerenciarDesvio">
+  <div class="desvio-modal">
+    <h2>REVALIDAR DESVIO</h2>
+    <label>Nº do desvio</label>
+    <div class="numero-fixo" id="gerDesvioNumero">-</div>
+
+    <label for="gerDesvioValidade">Nova validade *</label>
+    <input id="gerDesvioValidade" type="date">
+
+    <div id="msgGerenciarDesvio"></div>
+    <div class="acoes">
+      <button type="button" class="cancelar" id="cancelarGerenciarDesvio">CANCELAR</button>
+      <button type="button" class="salvar" id="salvarRevalidacaoDesvio">REVALIDAR</button>
+    </div>
+  </div>
+</div>
+
 <div class="desvio-modal-bg" id="modalCadastroDesvio">
   <div class="desvio-modal">
     <h2>CADASTRAR DESVIO</h2>
@@ -1108,6 +1212,11 @@ function sairAdmin(){
     e.style.background=ok?"#123d25":"#4b1f22";
     e.textContent=t;
   }
+  $("cancelarGerenciarDesvio").addEventListener("click",()=>{
+    $("modalGerenciarDesvio").style.display="none";
+  });
+  $("salvarRevalidacaoDesvio").addEventListener("click",revalidarDesvioUI);
+
   // Padroniza automaticamente o número: 00126 -> 001/26
   $("desvioNumero").addEventListener("input",()=>{
     const el=$("desvioNumero");
