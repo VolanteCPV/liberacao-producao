@@ -635,7 +635,7 @@ window.addEventListener('online',()=>setTimeout(sincronizarFila,1200));
 window.addEventListener('load',()=>{atualizarStatusFila();setTimeout(sincronizarFila,2500)});
 setInterval(sincronizarFila,15000);
 // Atualiza o relógio do alerta de 4h enquanto o ADM Turnos estiver aberto.
-setInterval(()=>{if(document.getElementById('turnosHome')?.style.display==='block')carregarPainelTurnos(true)},60000);
+setInterval(()=>{if(document.getElementById('turnosHome')?.style.display==='block')atualizarPainelTurnosSilencioso()},60000);
 
 
 
@@ -927,7 +927,7 @@ async function carregarPainelTurnos(manterStatusLocal=false){
     novosRegistros.forEach(r=>mesclados.set(chaveReg(r),r));
     turnosRegistros=[...mesclados.values()];
     const maquinas=MAQUINAS[lin]||[],limparAutomatico=[],alertas4h=[];
-    const linhas=maquinas.map(maq=>{let cs=[];for(let n=1;n<=3;n++){const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));let sp=temSP(data,lin,maq,n),pf=temPF(data,lin,maq,n);if(regs.length&&sp){sp=false;limparAutomatico.push([maq,n])}const alerta=(!sp&&!pf)?alerta4hTurno(maq,data,lin,n,regs):null;if(alerta)alertas4h.push(alerta);const cls=(sp?'turnos-sp':pf?'turnos-pf':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok')+(alerta?' turnos-atrasada':'');const txt=sp?'SP':pf?`${regs.length} PF`:regs.length;cs.push(`<td class="turnos-cell ${cls}" onclick="abrirDetalheTurno('${escJS(maq)}',${n})">${txt}</td>`)}return `<tr><td class="turnos-maq" title="Segure para SP ou PF" onpointerdown="iniciarPressSP('${escJS(maq)}')" onpointerup="cancelarPressSP()" onpointercancel="cancelarPressSP()" onpointerleave="cancelarPressSP()" onclick="bloquearClickAposSP(event)">${esc(maq)}</td>${cs.join('')}</tr>`}).join('');
+    const linhas=maquinas.map(maq=>{let cs=[];for(let n=1;n<=3;n++){const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));let sp=temSP(data,lin,maq,n),pf=temPF(data,lin,maq,n);if(regs.length&&sp){sp=false;limparAutomatico.push([maq,n])}const alerta=(!sp&&!pf)?alerta4hTurno(maq,data,lin,n,regs):null;if(alerta)alertas4h.push(alerta);const cls=(sp?'turnos-sp':pf?'turnos-pf':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok')+(alerta?' turnos-atrasada':'');const txt=sp?'SP':pf?`${regs.length} PF`:regs.length;cs.push(`<td class="turnos-cell ${cls}" data-maq="${esc(maq)}" data-turno="${n}" onclick="abrirDetalheTurno('${escJS(maq)}',${n})">${txt}</td>`)}return `<tr><td class="turnos-maq" title="Segure para SP ou PF" onpointerdown="iniciarPressSP('${escJS(maq)}')" onpointerup="cancelarPressSP()" onpointercancel="cancelarPressSP()" onpointerleave="cancelarPressSP()" onclick="bloquearClickAposSP(event)">${esc(maq)}</td>${cs.join('')}</tr>`}).join('');
     const boxAlerta=document.getElementById('turnosAlerta4h');
     if(alertas4h.length){
       boxAlerta.innerHTML=`<strong>⚠ ATENÇÃO — mais de 4h sem inspeção</strong>`+alertas4h.map(a=>`Máquina ${esc(a.maq)} • ${a.n}º turno • ${a.ultima==='sem inspeção no turno'?a.ultima:`última ${esc(a.ultima)}`} • há ${a.horas}h${String(a.min).padStart(2,'0')}`).join('<br>');
@@ -942,6 +942,54 @@ async function carregarPainelTurnos(manterStatusLocal=false){
     turnosTabela.innerHTML=`<table class="turnos-table"><thead><tr><th>Máq.</th><th>1º<br>06:00</th><th>2º<br>13:50</th><th>3º<br>21:50</th></tr></thead><tbody>${linhas}</tbody></table>`;
     turnosStatus.textContent=`${lin} • ${data.split('-').reverse().join('/')} • toque na quantidade para ver registros • segure a máquina para SP/PF.`;
   }catch(e){turnosStatus.textContent='Erro: '+e.message}
+}
+// Atualização silenciosa do ADM Turnos: mantém scroll, seleção e detalhes abertos.
+// Atualiza dados/contadores/células/alertas sem reconstruir a tela inteira.
+async function atualizarPainelTurnosSilencioso(){
+  const data=turnosData.value,lin=turnosLinha.value;
+  if(!data||!lin||turnosHome.style.display!=='block')return;
+  try{
+    const [resp]=await Promise.all([
+      fetch(csvAtualizado(CSV_URL),{cache:'no-store'}),
+      carregarSP(),carregarPF()
+    ]);
+    if(!resp.ok)return;
+    let a=parseCSV(await resp.text()).filter(r=>r.some(v=>String(v).trim()));
+    if(!a.length)return;
+    const h=a.shift(),D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']);
+    const val=(r,i)=>i>=0?(r[i]??''):'';
+    const novos=a.map(r=>({data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D)),dataTxt:String(val(r,DC)).trim()||val(r,D),maquina:String(val(r,M)).trim(),op:val(r,O),item:val(r,I),tipo:val(r,T),volante:val(r,V),situacao:val(r,SI)})).filter(x=>x.data);
+    const chave=r=>[r.data?.getTime?.()||0,r.maquina,r.op,r.item,r.tipo,r.volante,r.situacao].map(v=>String(v??'')).join('|');
+    const mapa=new Map(turnosRegistros.map(r=>[chave(r),r]));
+    novos.forEach(r=>mapa.set(chave(r),r));
+    turnosRegistros=[...mapa.values()];
+
+    const maquinas=MAQUINAS[lin]||[],alertas=[];
+    maquinas.forEach(maq=>{
+      for(let n=1;n<=3;n++){
+        const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));
+        const sp=temSP(data,lin,maq,n),pf=temPF(data,lin,maq,n);
+        const al=(!sp&&!pf)?alerta4hTurno(maq,data,lin,n,regs):null;
+        if(al)alertas.push(al);
+        const cell=turnosTabela.querySelector(`.turnos-cell[data-maq="${CSS.escape(String(maq))}"][data-turno="${n}"]`);
+        if(cell){
+          cell.classList.remove('turnos-sp','turnos-pf','turnos-zero','turnos-um','turnos-ok','turnos-atrasada');
+          cell.classList.add(sp?'turnos-sp':pf?'turnos-pf':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok');
+          if(al)cell.classList.add('turnos-atrasada');
+          cell.textContent=sp?'SP':pf?`${regs.length} PF`:String(regs.length);
+        }
+      }
+    });
+    const box=document.getElementById('turnosAlerta4h');
+    if(alertas.length){
+      box.innerHTML=`<strong>⚠ ATENÇÃO — mais de 4h sem inspeção</strong>`+alertas.map(a=>`Máquina ${esc(a.maq)} • ${a.n}º turno • ${a.ultima==='sem inspeção no turno'?a.ultima:`última ${esc(a.ultima)}`} • há ${a.horas}h${String(a.min).padStart(2,'0')}`).join('<br>');
+      box.style.display='block';
+    }else{box.style.display='none';box.innerHTML=''}
+    const maquinasCom=new Set(turnosRegistros.filter(r=>r.maquina&&[1,2,3].some(n=>emTurno(r.data,data,n))).map(r=>r.maquina));
+    const maquinasSP=new Set(),maquinasPF=new Set();
+    maquinas.forEach(maq=>{for(let n=1;n<=3;n++){if(temSP(data,lin,maq,n)&&!turnosRegistros.some(r=>r.maquina===maq&&emTurno(r.data,data,n)))maquinasSP.add(maq);if(temPF(data,lin,maq,n))maquinasPF.add(maq)}});
+    turnosMaqTotal.textContent=maquinas.length;turnosInspec.textContent=maquinasCom.size;turnosSPTotal.textContent=maquinasSP.size;turnosPFTotal.textContent=maquinasPF.size;turnosSem.textContent=maquinas.filter(maq=>!maquinasCom.has(maq)&&!maquinasSP.has(maq)&&!maquinasPF.has(maq)).length;
+  }catch(e){/* atualização silenciosa: mantém a tela atual em caso de falha */}
 }
 function abrirDetalheTurno(maq,n){
   const data=turnosData.value,regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n)).sort((a,b)=>a.data-b.data);
