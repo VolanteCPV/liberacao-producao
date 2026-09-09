@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V18.8.1 Oficial - Sincronização</title>
+<title>Liberação de Produção V18.9.1 Oficial - Alerta 4h</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -78,7 +78,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 /* ADM TURNOS V18.2 */
 .turnos-home{display:none;max-width:520px;margin:auto;background:#151b23;padding:20px;border-radius:16px;border:1px solid #263241;color:#f8fafc}
 .turnos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.turnos-grid button{margin-top:0}
-.turnos-table-wrap{overflow-x:auto;margin-top:12px}.turnos-table{width:100%;border-collapse:separate;border-spacing:5px;font-size:13px}.turnos-table th{color:#cbd5e1;padding:5px}.turnos-table td{padding:0;text-align:center}.turnos-maq{font-weight:800;white-space:nowrap;padding:9px!important}.turnos-cell{min-width:58px;padding:10px 6px!important;border-radius:8px;font-weight:800;cursor:pointer;border:1px solid #334155}.turnos-sp{background:#e5e7eb!important;color:#111827!important}.turnos-pf{background:#1e3a5f!important;color:#dbeafe!important;border-color:#60a5fa!important}.turnos-maq{touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}.turnos-zero{background:#7f1d1d;color:#fecaca}.turnos-um{background:#854d0e;color:#fef3c7}.turnos-ok{background:#14532d;color:#bbf7d0}.turnos-detail{display:none;margin-top:14px}.turnos-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:12px 0}.turnos-summary div{background:#0f141b;border:1px solid #334155;border-radius:9px;padding:9px;text-align:center}.turnos-summary strong{display:block;font-size:20px}.turnos-summary span{font-size:11px;color:#94a3b8}
+.turnos-table-wrap{overflow-x:auto;margin-top:12px}.turnos-table{width:100%;border-collapse:separate;border-spacing:5px;font-size:13px}.turnos-table th{color:#cbd5e1;padding:5px}.turnos-table td{padding:0;text-align:center}.turnos-maq{font-weight:800;white-space:nowrap;padding:9px!important}.turnos-cell{min-width:58px;padding:10px 6px!important;border-radius:8px;font-weight:800;cursor:pointer;border:1px solid #334155}.turnos-sp{background:#e5e7eb!important;color:#111827!important}.turnos-pf{background:#1e3a5f!important;color:#dbeafe!important;border-color:#60a5fa!important}.turnos-maq{touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}.turnos-zero{background:#7f1d1d;color:#fecaca}.turnos-um{background:#854d0e;color:#fef3c7}.turnos-ok{background:#14532d;color:#bbf7d0}.turnos-detail{display:none;margin-top:14px}.turnos-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:12px 0}.turnos-summary div{background:#0f141b;border:1px solid #334155;border-radius:9px;padding:9px;text-align:center}.turnos-summary strong{display:block;font-size:20px}.turnos-summary span{font-size:11px;color:#94a3b8}.turnos-alerta4h{display:none;margin:12px 0;padding:13px;border:2px solid #f59e0b;border-radius:12px;background:#451a03;color:#fde68a;font-weight:800;line-height:1.45}.turnos-alerta4h strong{display:block;font-size:17px;margin-bottom:4px}.turnos-atrasada{outline:3px solid #f59e0b!important;box-shadow:0 0 0 2px rgba(245,158,11,.25),0 0 14px rgba(245,158,11,.55);animation:turnosPulso 1.4s ease-in-out infinite}.turnos-atrasada::after{content:" ⚠"}@keyframes turnosPulso{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
 
 /* Modal SP interno — sem prompt/confirm do navegador */
 .sp-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:10050;align-items:flex-end;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(3px)}
@@ -261,6 +261,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
   <label>Data</label><input id="turnosData" type="date" onchange="carregarPainelTurnos()">
   <label>Linha</label><select id="turnosLinha" onchange="carregarPainelTurnos()"></select>
   <div class="status" id="turnosStatus">Selecione a data e a linha.</div>
+  <div class="turnos-alerta4h" id="turnosAlerta4h"></div>
   <div class="turnos-summary" id="turnosResumo" style="display:none"><div><strong id="turnosMaqTotal">0</strong><span>Máquinas</span></div><div><strong id="turnosInspec">0</strong><span>Com inspeção</span></div><div><strong id="turnosSPTotal">0</strong><span>Em SP</span></div><div><strong id="turnosPFTotal">0</strong><span>Em PF</span></div><div><strong id="turnosSem">0</strong><span>Sem inspeção</span></div></div>
   <div class="turnos-table-wrap" id="turnosTabela"></div>
   <div class="turnos-detail" id="turnosDetalhe"></div>
@@ -632,6 +633,8 @@ async function enviarInspecao(){
 window.addEventListener('online',()=>setTimeout(sincronizarFila,1200));
 window.addEventListener('load',()=>{atualizarStatusFila();setTimeout(sincronizarFila,2500)});
 setInterval(sincronizarFila,15000);
+// Atualiza o relógio do alerta de 4h enquanto o ADM Turnos estiver aberto.
+setInterval(()=>{if(document.getElementById('turnosHome')?.style.display==='block')carregarPainelTurnos(true)},60000);
 
 
 
@@ -817,7 +820,7 @@ function entrarTurnos(){
   areaComum.style.display='none';adminHome.style.display='none';turnosHome.style.display='block';turnosData.value=hojeLocalISO();
   turnosLinha.innerHTML=TURNOS_LINHAS.map(l=>`<option>${esc(l)}</option>`).join('');turnosDetalhe.style.display='none';carregarPainelTurnos();window.scrollTo({top:0});
 }
-function sairTurnos(){turnosHome.style.display='none';areaComum.style.display='block';TURNOS_LINHAS=[];turnosTabela.innerHTML='';turnosDetalhe.style.display='none';window.scrollTo({top:0})}
+function sairTurnos(){turnosHome.style.display='none';areaComum.style.display='block';TURNOS_LINHAS=[];turnosTabela.innerHTML='';turnosDetalhe.style.display='none';const a=document.getElementById('turnosAlerta4h');if(a){a.style.display='none';a.innerHTML=''}window.scrollTo({top:0})}
 function turnoFaixa(dataISO,n){
   const [y,m,d]=dataISO.split('-').map(Number),base=new Date(y,m-1,d);let ini,fim;
   if(n===1){ini=new Date(y,m-1,d,6,0);fim=new Date(y,m-1,d,13,50)}
@@ -826,6 +829,19 @@ function turnoFaixa(dataISO,n){
   return {ini,fim};
 }
 function emTurno(dt,dataISO,n){const f=turnoFaixa(dataISO,n);return dt>=f.ini&&dt<f.fim}
+function alerta4hTurno(maq,dataISO,lin,n,regs){
+  const agora=new Date(),f=turnoFaixa(dataISO,n);
+  // O alerta só existe para o turno que está acontecendo agora.
+  if(agora<f.ini||agora>=f.fim)return null;
+  if(temSP(dataISO,lin,maq,n)||temPF(dataISO,lin,maq,n))return null;
+  const validos=regs.filter(r=>r.data>=f.ini&&r.data<f.fim).sort((a,b)=>b.data-a.data);
+  const referencia=validos.length?validos[0].data:f.ini;
+  const ms=agora-referencia;
+  if(ms<4*60*60*1000)return null;
+  const horas=Math.floor(ms/3600000),min=Math.floor((ms%3600000)/60000);
+  const z=v=>String(v).padStart(2,'0');
+  return {maq,n,horas,min,ultima:validos.length?`${z(referencia.getHours())}:${z(referencia.getMinutes())}`:'sem inspeção no turno'};
+}
 function dataISOparaBR(v){const a=String(v||'').split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:v}
 function turnoSPKey(v){const x=String(v||'').trim().toLowerCase();if(x==='1'||x.startsWith('1'))return '1';if(x==='2'||x.startsWith('2'))return '2';if(x==='3'||x.startsWith('3'))return '3';return x}
 function turnoStatusKey(v){const x=String(v||'').trim().toLowerCase();if(x==='1'||x.startsWith('1'))return '1';if(x==='2'||x.startsWith('2'))return '2';if(x==='3'||x.startsWith('3'))return '3';return x}
@@ -901,9 +917,22 @@ async function carregarPainelTurnos(manterStatusLocal=false){
     let a=parseCSV(await resp.text()).filter(r=>r.some(v=>String(v).trim()));const h=a.shift();
     const D=col(h,['Carimbo de data/hora','Data']),DC=col(h,['Data/Hora corrigida']),M=col(h,['Máquina','Maquina']),O=col(h,['Número da OP','OP']),I=col(h,['Item']),T=col(h,['Tipo de inspeção','Tipo de atividade']),V=col(h,['Volante responsável','Responsável']),SI=col(h,['Situação encontrada','Situação']);
     const val=(r,i)=>i>=0?(r[i]??''):'';
-    turnosRegistros=a.map(r=>({data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D)),dataTxt:String(val(r,DC)).trim()||val(r,D),maquina:String(val(r,M)).trim(),op:val(r,O),item:val(r,I),tipo:val(r,T),volante:val(r,V),situacao:val(r,SI)})).filter(x=>x.data);
-    const maquinas=MAQUINAS[lin]||[],limparAutomatico=[];
-    const linhas=maquinas.map(maq=>{let cs=[];for(let n=1;n<=3;n++){const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));let sp=temSP(data,lin,maq,n),pf=temPF(data,lin,maq,n);if(regs.length&&sp){sp=false;limparAutomatico.push([maq,n])}const cls=sp?'turnos-sp':pf?'turnos-pf':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok';const txt=sp?'SP':pf?`${regs.length} PF`:regs.length;cs.push(`<td class="turnos-cell ${cls}" onclick="abrirDetalheTurno('${escJS(maq)}',${n})">${txt}</td>`)}return `<tr><td class="turnos-maq" title="Segure para SP ou PF" onpointerdown="iniciarPressSP('${escJS(maq)}')" onpointerup="cancelarPressSP()" onpointercancel="cancelarPressSP()" onpointerleave="cancelarPressSP()" onclick="bloquearClickAposSP(event)">${esc(maq)}</td>${cs.join('')}</tr>`}).join('');
+    // O CSV publicado pelo Google pode oscilar por alguns minutos após uma gravação.
+    // Nunca deixamos uma inspeção que já foi vista pelo ADM "sumir" durante a sessão:
+    // mesclamos a leitura nova com os registros já confirmados anteriormente no painel.
+    const novosRegistros=a.map(r=>({data:dataBRParaDate(String(val(r,DC)).trim()||val(r,D)),dataTxt:String(val(r,DC)).trim()||val(r,D),maquina:String(val(r,M)).trim(),op:val(r,O),item:val(r,I),tipo:val(r,T),volante:val(r,V),situacao:val(r,SI)})).filter(x=>x.data);
+    const chaveReg=r=>[r.data?.getTime?.()||0,r.maquina,r.op,r.item,r.tipo,r.volante,r.situacao].map(v=>String(v??'')).join('|');
+    const mesclados=new Map(turnosRegistros.map(r=>[chaveReg(r),r]));
+    novosRegistros.forEach(r=>mesclados.set(chaveReg(r),r));
+    turnosRegistros=[...mesclados.values()];
+    const maquinas=MAQUINAS[lin]||[],limparAutomatico=[],alertas4h=[];
+    const linhas=maquinas.map(maq=>{let cs=[];for(let n=1;n<=3;n++){const regs=turnosRegistros.filter(r=>r.maquina===maq&&emTurno(r.data,data,n));let sp=temSP(data,lin,maq,n),pf=temPF(data,lin,maq,n);if(regs.length&&sp){sp=false;limparAutomatico.push([maq,n])}const alerta=(!sp&&!pf)?alerta4hTurno(maq,data,lin,n,regs):null;if(alerta)alertas4h.push(alerta);const cls=(sp?'turnos-sp':pf?'turnos-pf':regs.length===0?'turnos-zero':regs.length===1?'turnos-um':'turnos-ok')+(alerta?' turnos-atrasada':'');const txt=sp?'SP':pf?`${regs.length} PF`:regs.length;cs.push(`<td class="turnos-cell ${cls}" onclick="abrirDetalheTurno('${escJS(maq)}',${n})">${txt}</td>`)}return `<tr><td class="turnos-maq" title="Segure para SP ou PF" onpointerdown="iniciarPressSP('${escJS(maq)}')" onpointerup="cancelarPressSP()" onpointercancel="cancelarPressSP()" onpointerleave="cancelarPressSP()" onclick="bloquearClickAposSP(event)">${esc(maq)}</td>${cs.join('')}</tr>`}).join('');
+    const boxAlerta=document.getElementById('turnosAlerta4h');
+    if(alertas4h.length){
+      boxAlerta.innerHTML=`<strong>⚠ ATENÇÃO — mais de 4h sem inspeção</strong>`+alertas4h.map(a=>`Máquina ${esc(a.maq)} • ${a.n}º turno • ${a.ultima==='sem inspeção no turno'?a.ultima:`última ${esc(a.ultima)}`} • há ${a.horas}h${String(a.min).padStart(2,'0')}`).join('<br>');
+      boxAlerta.style.display='block';
+      if(navigator.vibrate)navigator.vibrate([180,100,180]);
+    }else{boxAlerta.style.display='none';boxAlerta.innerHTML='';}
     if(limparAutomatico.length){const d=dataISOparaBR(data);limparAutomatico.forEach(([maq,n])=>{turnosSP=turnosSP.filter(x=>!(x.data===d&&x.linha===lin&&x.maquina===String(maq)&&turnoStatusKey(x.turno)===String(n)));enviarSP(maq,n,'retirar').catch(()=>{})})}
     const maquinasCom=new Set(turnosRegistros.filter(r=>r.maquina&&[1,2,3].some(n=>emTurno(r.data,data,n))).map(r=>r.maquina));
     const maquinasSP=new Set(),maquinasPF=new Set();maquinas.forEach(maq=>{for(let n=1;n<=3;n++){if(temSP(data,lin,maq,n)&&!turnosRegistros.some(r=>r.maquina===maq&&emTurno(r.data,data,n)))maquinasSP.add(maq);if(temPF(data,lin,maq,n))maquinasPF.add(maq)}});
