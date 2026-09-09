@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Liberação de Produção V18.9.1 Oficial - Alerta 4h</title>
+<title>Liberação de Produção V18.10 Oficial</title>
 <link rel="icon" type="image/png" href="ícone.png">
 <link rel="apple-touch-icon" href="ícone.png">
 <link rel="manifest" href="./manifest.json">
@@ -302,6 +302,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 <script src="https://unpkg.com/niimbot-web-bluetooth@2.4.0/src/niimbot.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 function confirmarNoApp(msg){
   return new Promise(resolve=>{
@@ -1132,11 +1133,65 @@ function abrirDetalheItem(item){
 function fecharDetalheItem(){detalheItemNOK.style.display='none';cardRankItens.style.display='block';cardRankItens.scrollIntoView({behavior:'smooth',block:'start'});}
 
 async function compartilharRelatorio(){
-  const texto=`Relatório de Produção\n${periodoTexto.textContent}\nTotal: ${kTotal.textContent}\nVoleios: ${kVoleios.textContent}\nPeças OK: ${kOK.textContent}\nPeças NOK: ${kNOK.textContent}`;
+  const btn=[...document.querySelectorAll('button')].find(b=>b.getAttribute('onclick')==='compartilharRelatorio()');
+  const antigo=btn?.textContent||'';
   try{
-    if(navigator.share)await navigator.share({title:'Relatório de Produção',text:texto});
-    else{await navigator.clipboard.writeText(texto);alert('Resumo copiado.');}
-  }catch(e){}
+    if(!window.jspdf?.jsPDF)throw Error('Gerador de PDF não carregou. Verifique a internet.');
+    if(btn){btn.disabled=true;btn.textContent='⏳ GERANDO PDF...';}
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    const W=210,H=297,M=12,CW=W-M*2;
+    const preto=[24,31,41], verde=[21,128,61], cinza=[90,100,115];
+    const txt=(t,x,y,size=10,style='normal',cor=preto)=>{pdf.setFont('helvetica',style);pdf.setFontSize(size);pdf.setTextColor(...cor);pdf.text(String(t??''),x,y);};
+    const linha=()=>{pdf.setDrawColor(210,215,220);pdf.line(M,44,W-M,44);};
+    const cabecalho=()=>{
+      pdf.setFillColor(15,82,72);pdf.roundedRect(M,10,CW,22,2,2,'F');
+      pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text('RELATÓRIO DE PRODUÇÃO',M+6,19);
+      pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.text(periodoTexto.textContent||'',M+6,26);
+      pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(...cinza);pdf.text('Liberação de Produção',W-M,38,{align:'right'});
+      linha();
+    };
+    cabecalho();
+    // KPIs
+    const cards=[['TOTAL',kTotal.textContent],['VOLEIOS',kVoleios.textContent],['PEÇAS OK',kOK.textContent],['PEÇAS NOK',kNOK.textContent]];
+    const gap=3,cw=(CW-gap*3)/4;
+    cards.forEach(([lab,val],i)=>{const x=M+i*(cw+gap);pdf.setFillColor(244,246,248);pdf.setDrawColor(215,220,225);pdf.roundedRect(x,50,cw,24,2,2,'FD');pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.setTextColor(...preto);pdf.text(String(val),x+cw/2,61,{align:'center'});pdf.setFontSize(7);pdf.setTextColor(...cinza);pdf.text(lab,x+cw/2,69,{align:'center'});});
+    let y=82;
+    const addChart=(id,titulo)=>{
+      const canvas=document.getElementById(id);if(!canvas)return;
+      txt(titulo,M,y,11,'bold',preto);y+=4;
+      const img=canvas.toDataURL('image/png',1.0);const h=58;
+      pdf.setDrawColor(225,228,232);pdf.roundedRect(M,y,CW,h,2,2,'S');pdf.addImage(img,'PNG',M+2,y+2,CW-4,h-4,undefined,'FAST');y+=h+9;
+    };
+    addChart('grafVolantes','Voleios por volante');
+    addChart('grafSetores','Registros por setor');
+    addChart('grafTipos','Tipos de atividade');
+    if(y>220){pdf.addPage();cabecalho();y=52;}
+    addChart('grafDefeitos','Top 10 problemas encontrados');
+    // Rankings em página própria para legibilidade
+    pdf.addPage();cabecalho();y=54;
+    txt('RANKINGS DO PERÍODO',M,y,13,'bold',verde);y+=9;
+    txt('Problemas encontrados',M,y,11,'bold',preto);y+=7;
+    const probs=[...rankDefeitos.querySelectorAll('li')].map(li=>li.textContent.trim()).filter(Boolean);
+    if(!probs.length){txt('Nenhum problema encontrado no período.',M,y,9,'normal',cinza);y+=7;}
+    else probs.forEach((v,i)=>{txt(`${i+1}. ${v}`,M,y,9);y+=6;});
+    y+=5;txt('Top 10 itens NOK',M,y,11,'bold',preto);y+=7;
+    const itens=[...rankItensNOK.querySelectorAll('li')].map(li=>li.textContent.replace(/\s+/g,' ').trim()).filter(Boolean);
+    if(!itens.length){txt('Nenhum item NOK no período.',M,y,9,'normal',cinza);y+=7;}
+    else itens.forEach((v,i)=>{const linhas=pdf.splitTextToSize(`${i+1}. ${v}`,CW);txt(linhas,M,y,9);y+=5*linhas.length+2;});
+    const paginas=pdf.getNumberOfPages();
+    for(let p=1;p<=paginas;p++){pdf.setPage(p);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(...cinza);pdf.text(`Página ${p} de ${paginas}`,W-M,H-8,{align:'right'});}
+    const nome='relatorio_producao_'+new Date().toISOString().slice(0,10)+'.pdf';
+    const blob=pdf.output('blob');const file=new File([blob],nome,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({title:'Relatório de Produção',text:periodoTexto.textContent||'',files:[file]});
+    }else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      statusRelatorio.textContent='✓ PDF completo gerado. O aparelho não permite compartilhar arquivo diretamente; o PDF foi salvo para você enviar.';
+    }
+  }catch(e){
+    if(e?.name!=='AbortError')statusRelatorio.textContent='Erro ao gerar/compartilhar PDF: '+e.message;
+  }finally{if(btn){btn.disabled=false;btn.textContent=antigo||'📤 COMPARTILHAR';}}
 }
 
 
