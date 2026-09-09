@@ -111,7 +111,7 @@ body{font-family:Arial,sans-serif;background:#0b0f14;margin:0;padding:16px;color
 .desvio-modal .acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
 .desvio-modal .salvar{background:#178b43;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:16px}
 .desvio-modal .cancelar{background:#52657b;color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:16px}
-.desvio-card .desvio-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.desvio-card .desvio-acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:10px}
 .desvio-card .desvio-acao{border:0;border-radius:9px;padding:10px 8px;font-weight:800;font-size:13px;cursor:pointer}
 .desvio-card .revalidar{background:#2563eb;color:#fff}
 .desvio-card .encerrar{background:#b91c1c;color:#fff}
@@ -678,6 +678,7 @@ async function verificarDesviosItem(d){
     if(classe==='vermelho')alertaDesvio.classList.add('vermelho');
     alertaDesvioTitulo.textContent = "";
 
+    desviosAtivosPorNumero=new Map(j.desvios.map(x=>[String(x.numero||'').trim(),x]));
     alertaDesvioConteudo.innerHTML=j.desvios.map(x=>{
       const vencido=classeValidadeDesvio([x])==='vermelho';
       const situacao=vencido?'VENCIDO':'ATIVO';
@@ -692,7 +693,7 @@ async function verificarDesviosItem(d){
           Descrição: ${escDesvio(x.descricao||'-')}
         </span>
         <div class="desvio-acoes">
-          <button type="button" class="desvio-acao revalidar" data-numero="${escDesvio(x.numero||'')}">REVALIDAR</button>
+          ${vencido?`<button type="button" class="desvio-acao revalidar" data-numero="${escDesvio(x.numero||'')}">REVALIDAR</button>`:''}
           <button type="button" class="desvio-acao encerrar" data-numero="${escDesvio(x.numero||'')}">ENCERRAR</button>
         </div>
       </div>`;
@@ -712,6 +713,8 @@ async function verificarDesviosItem(d){
 
 
 let desvioGerenciadoNumero="";
+let desvioEncerrarNumero="";
+let desviosAtivosPorNumero=new Map();
 
 function msgGerenciarDesvio(t,ok){
   const e=document.getElementById("msgGerenciarDesvio");
@@ -763,20 +766,44 @@ async function revalidarDesvioUI(){
   }
 }
 
-async function encerrarDesvioUI(numero){
+function encerrarDesvioUI(numero){
   numero=String(numero||"").trim();
   if(!numero)return;
-  if(!confirm(`Encerrar o desvio ${numero}? Ele deixará de aparecer como desvio ativo.`))return;
+  desvioEncerrarNumero=numero;
+  const x=desviosAtivosPorNumero.get(numero)||{};
+  document.getElementById("encDesvioNumero").textContent=numero||"-";
+  document.getElementById("encDesvioDados").innerHTML=
+    `<b>Item:</b> ${escDesvio(x.item||inspDados?.item||'-')}<br>`+
+    `<b>Máquina:</b> ${escDesvio(x.maquina||inspDados?.maquina||'-')}<br>`+
+    `<b>Validade:</b> ${escDesvio(x.validade||'-')}`;
+  document.getElementById("msgEncerrarDesvio").style.display="none";
+  document.getElementById("modalEncerrarDesvio").style.display="flex";
+}
+
+async function confirmarEncerrarDesvio(){
+  if(!desvioEncerrarNumero)return;
+  const btn=document.getElementById("confirmarEncerrarDesvio");
+  const msg=document.getElementById("msgEncerrarDesvio");
+  btn.disabled=true; btn.textContent="ENCERRANDO...";
   try{
-    const body=new URLSearchParams({acao:"encerrarDesvio",numero});
+    const body=new URLSearchParams({acao:"encerrarDesvio",numero:desvioEncerrarNumero});
     await fetch(CONFIG_URL,{
       method:"POST",mode:"no-cors",
       headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
       body
     });
-    setTimeout(async()=>{ await verificarDesviosItem(inspDados); },1400);
+    msg.style.display="block"; msg.style.background="#123d25";
+    msg.textContent="Encerramento enviado. Confirmando...";
+    setTimeout(async()=>{
+      await verificarDesviosItem(inspDados);
+      document.getElementById("modalEncerrarDesvio").style.display="none";
+      desvioEncerrarNumero="";
+    },1400);
   }catch(e){
-    alert("Não foi possível encerrar o desvio.");
+    msg.style.display="block"; msg.style.background="#4b1f22";
+    msg.textContent="Não foi possível encerrar o desvio.";
+  }finally{
+    btn.disabled=false; btn.textContent="ENCERRAR DESVIO";
   }
 }
 
@@ -1287,6 +1314,21 @@ function sairAdmin(){
   </div>
 </div>
 
+<div class="desvio-modal-bg" id="modalEncerrarDesvio">
+  <div class="desvio-modal">
+    <h2>ENCERRAR DESVIO</h2>
+    <label>Nº do desvio</label>
+    <div class="numero-fixo" id="encDesvioNumero">-</div>
+    <div class="dados-qr" id="encDesvioDados" style="margin-top:12px"></div>
+    <div style="margin-top:14px;padding:12px;border-radius:12px;background:#4b1f22;font-weight:700">Esta ação encerrará o desvio e ele deixará de aparecer como ativo.</div>
+    <div id="msgEncerrarDesvio" style="display:none;margin-top:12px;padding:10px;border-radius:10px"></div>
+    <div class="acoes">
+      <button type="button" class="cancelar" id="cancelarEncerrarDesvio">CANCELAR</button>
+      <button type="button" class="salvar" id="confirmarEncerrarDesvio" style="background:#b91c1c">ENCERRAR DESVIO</button>
+    </div>
+  </div>
+</div>
+
 <div class="desvio-modal-bg" id="modalCadastroDesvio">
   <div class="desvio-modal">
     <h2>CADASTRAR DESVIO</h2>
@@ -1350,6 +1392,11 @@ function sairAdmin(){
     $("modalGerenciarDesvio").style.display="none";
   });
   $("salvarRevalidacaoDesvio").addEventListener("click",revalidarDesvioUI);
+  $("cancelarEncerrarDesvio").addEventListener("click",()=>{
+    $("modalEncerrarDesvio").style.display="none";
+    desvioEncerrarNumero="";
+  });
+  $("confirmarEncerrarDesvio").addEventListener("click",confirmarEncerrarDesvio);
 
   // Padroniza automaticamente o número: 00126 -> 001/26
   $("desvioNumero").addEventListener("input",()=>{
